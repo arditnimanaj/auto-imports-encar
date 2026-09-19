@@ -158,7 +158,11 @@ function Hero({
         </p>
 
         <div className="mt-8 flex flex-wrap items-center gap-3">
-          <Button size="lg" nativeButton={false} render={<Link href="/cars" />}>See {stock.toLocaleString('en-US')} cars in stock</Button>
+          <Button size="lg" nativeButton={false} render={<Link href="/cars" />}>
+            See{' '}
+            {stock ? stock.toLocaleString('en-US') : <ClientCount fallback="our" />}
+            {' '}cars in stock
+          </Button>
           <Button
             size="lg"
             variant="outline"
