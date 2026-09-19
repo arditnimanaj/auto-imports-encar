@@ -43,7 +43,8 @@ export default async function CarsPage({ searchParams }: { searchParams: Promise
   let total: number;
 
   if (q) {
-    const { cars: window } = await searchCars(filters, { limit: SEARCH_WINDOW, sort });
+    const { cars: window } = await searchCars(filters, { limit: SEARCH_WINDOW, sort })
+      .catch(() => ({ cars: [] as Car[] }));
     const needle = q.toLowerCase();
     const hits = window.filter((c) =>
       `${c.make} ${makeEn(c.make)} ${c.model} ${modelEn(c.model)} ${c.trim ?? ''} ${modelEn(c.trim)}`
@@ -53,7 +54,7 @@ export default async function CarsPage({ searchParams }: { searchParams: Promise
   } else {
     const res = await searchCars(filters, {
       offset: (page - 1) * PAGE_SIZE, limit: PAGE_SIZE, sort,
-    });
+    }).catch(() => ({ count: 0, cars: [] as Car[] }));
     cars = res.cars;
     total = res.count;
   }

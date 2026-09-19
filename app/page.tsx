@@ -10,12 +10,15 @@ import { makeEn, modelEn } from '@/lib/i18n';
 import { SITE } from '@/lib/site';
 
 export default async function Home() {
+  // Every stock call degrades to empty rather than failing the page -- the
+  // rest of the homepage still sells the business if Encar is unreachable.
+  const empty = { count: 0, cars: [] };
   const [rate, featured, newest, affordable, makes] = await Promise.all([
     getRate(),
-    getFeatured(),
-    searchCars({}, { limit: 8, sort: 'newest' }),
-    searchCars({ priceMax: 4000 }, { limit: 6, sort: 'priceAsc' }),
-    getMakes(),
+    getFeatured().catch(() => []),
+    searchCars({}, { limit: 8, sort: 'newest' }).catch(() => empty),
+    searchCars({ priceMax: 4000 }, { limit: 6, sort: 'priceAsc' }).catch(() => empty),
+    getMakes().catch(() => []),
   ]);
 
   const hero = featured.find((c) => c.imageUrl) ?? newest.cars[0];
@@ -26,6 +29,7 @@ export default async function Home() {
       <Hero car={hero} stock={stock} rate={rate.krwToEur} />
       <RouteStrip stock={stock} />
 
+      {featured.length > 0 && (
       <Section
         title="Ten cars, picked fresh"
         note="A fresh selection each visit, weighted to the German marques."
@@ -38,7 +42,9 @@ export default async function Home() {
           ))}
         </div>
       </Section>
+      )}
 
+      {newest.cars.length > 0 && (
       <Section
         title="Just landed"
         note="The most recently listed cars in Korea, ready to quote."
@@ -54,7 +60,9 @@ export default async function Home() {
           ))}
         </div>
       </Section>
+      )}
 
+      {makes.length > 0 && (
       <Section
         title="Browse by make"
         note="Live counts — every number is stock we can quote today."
@@ -74,6 +82,7 @@ export default async function Home() {
           ))}
         </div>
       </Section>
+      )}
 
       {affordable.cars.length > 0 && (
         <Section
@@ -147,7 +156,7 @@ function Hero({
 
 function RouteStrip({ stock }: { stock: number }) {
   const facts = [
-    { value: stock.toLocaleString('en-US'), label: 'cars in stock right now' },
+    { value: stock ? stock.toLocaleString('en-US') : '—', label: 'cars in stock right now' },
     { value: '2026', label: 'the oldest model year we list' },
     { value: SITE.route.join(' → '), label: 'the route your car takes' },
   ];

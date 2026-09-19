@@ -72,8 +72,19 @@ export function buildQuery(f: Filters = {}): string {
 }
 
 async function getJson<T>(url: string, revalidate = 300): Promise<T> {
+  // Encar rejects requests from some hosting egress. Sending the headers a
+  // browser would, and running the functions from Seoul (see vercel.json),
+  // keeps it answering from a deployed environment as well as locally.
   const res = await fetch(url, {
-    headers: { Accept: 'application/json' },
+    headers: {
+      Accept: 'application/json, text/plain, */*',
+      'Accept-Language': 'ko-KR,ko;q=0.9,en;q=0.8',
+      'User-Agent':
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+        + ' (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36',
+      Referer: 'https://www.encar.com/',
+      Origin: 'https://www.encar.com',
+    },
     next: { revalidate },
   });
   if (!res.ok) {
