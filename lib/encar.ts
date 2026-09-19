@@ -7,7 +7,7 @@
 // The detail endpoint is not blocked and stays server-rendered.
 
 import {
-  buildQuery, normalize, searchUrl, SEARCH_URL,
+  buildQuery, extractFacets, metaUrl, normalize, searchUrl, SEARCH_URL,
   type Car, type Filters, type SearchResponse, type SortKey,
 } from './encar-shared';
 
@@ -16,7 +16,6 @@ export {
   type Car, type Filters, type SortKey,
 } from './encar-shared';
 
-const SEARCH_META = 'https://api.encar.com/search/car/list/general';
 const DETAIL = 'https://api.encar.com/v1/readside/vehicle';
 
 const BROWSER_HEADERS = {
@@ -127,36 +126,8 @@ export async function getModelGroups(make?: string): Promise<{ name: string; cou
 }
 
 async function facets(name: string, filters: Filters) {
-  const url = `${SEARCH_META}?count=true`
-    + `&q=${encodeURIComponent(buildQuery(filters))}`
-    + `&inav=${encodeURIComponent('|Metadata|Sort')}`;
-  const data = await getJson<{ iNav?: { Nodes?: unknown[] } }>(url, 3600)
-    .catch(() => null);
-  if (!data) return [];
-  const node = findNode(data.iNav?.Nodes, name);
-  const list = (node?.Facets ?? []) as { Value: string; Count: number }[];
-  return list
-    .filter((f) => f.Count > 0)
-    .map((f) => ({ name: f.Value, count: f.Count }))
-    .sort((a, b) => b.count - a.count);
-}
-
-type MetaNode = { Name?: string; Facets?: unknown[] };
-function findNode(o: unknown, name: string): MetaNode | null {
-  if (Array.isArray(o)) {
-    for (const c of o) {
-      const r = findNode(c, name);
-      if (r) return r;
-    }
-  } else if (o && typeof o === 'object') {
-    const rec = o as Record<string, unknown>;
-    if (rec.Name === name) return rec as MetaNode;
-    for (const v of Object.values(rec)) {
-      const r = findNode(v, name);
-      if (r) return r;
-    }
-  }
-  return null;
+  const data = await getJson<unknown>(metaUrl(filters), 3600).catch(() => null);
+  return data ? extractFacets(data, name) : [];
 }
 
 // The detail endpoint names the photo field `path`; search calls it `location`.

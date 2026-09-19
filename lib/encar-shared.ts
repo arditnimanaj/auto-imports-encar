@@ -106,3 +106,44 @@ export function normalize(r: RawCar): Car {
 }
 
 export type SearchResponse = { Count?: number; SearchResults?: RawCar[] };
+
+export const SEARCH_META_URL = 'https://api.encar.com/search/car/list/general';
+
+/** URL for Encar's filter metadata: facet lists with live counts. */
+export function metaUrl(filters: Filters = {}): string {
+  return `${SEARCH_META_URL}?count=true`
+    + `&q=${encodeURIComponent(buildQuery(filters))}`
+    + `&inav=${encodeURIComponent('|Metadata|Sort')}`;
+}
+
+type MetaNode = { Name?: string; Facets?: unknown[] };
+
+function findNode(o: unknown, name: string): MetaNode | null {
+  if (Array.isArray(o)) {
+    for (const c of o) {
+      const r = findNode(c, name);
+      if (r) return r;
+    }
+  } else if (o && typeof o === 'object') {
+    const rec = o as Record<string, unknown>;
+    if (rec.Name === name) return rec as MetaNode;
+    for (const v of Object.values(rec)) {
+      const r = findNode(v, name);
+      if (r) return r;
+    }
+  }
+  return null;
+}
+
+/** Pull one named facet list (e.g. "Manufacturer", "ModelGroup") out of it. */
+export function extractFacets(
+  json: unknown, name: string,
+): { name: string; count: number }[] {
+  const nodes = (json as { iNav?: { Nodes?: unknown[] } })?.iNav?.Nodes;
+  const node = findNode(nodes, name);
+  const list = (node?.Facets ?? []) as { Value: string; Count: number }[];
+  return list
+    .filter((f) => f.Count > 0)
+    .map((f) => ({ name: f.Value, count: f.Count }))
+    .sort((a, b) => b.count - a.count);
+}

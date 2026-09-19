@@ -4,13 +4,14 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { SlidersHorizontal } from 'lucide-react';
-import { makeEn } from '@/lib/i18n';
-import { FUEL_OPTIONS } from '@/lib/i18n';
+import { FUEL_OPTIONS, makeEn } from '@/lib/i18n';
+import { useFacets } from '@/lib/use-facets';
 
 type Props = { makes: { name: string; count: number }[] };
 
-export default function Sidebar({ makes }: Props) {
+export default function Sidebar({ makes: serverMakes }: Props) {
   const params = useSearchParams();
+  const makes = useFacets('Manufacturer', serverMakes);
   const [open, setOpen] = useState(false);
   const activeMake = params.get('make') ?? '';
   const activeFuel = params.get('fuel') ?? '';

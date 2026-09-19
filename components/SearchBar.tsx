@@ -9,6 +9,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { FUEL_OPTIONS, makeEn, modelEn } from '@/lib/i18n';
+import { useFacets } from '@/lib/use-facets';
 
 type Props = {
   makes: { name: string; count: number }[];
@@ -35,10 +36,16 @@ const BUDGETS = [
 
 const ANY = 'any';
 
-export default function SearchBar({ makes, models }: Props) {
+export default function SearchBar({ makes: serverMakes, models: serverModels }: Props) {
   const router = useRouter();
   const params = useSearchParams();
   const [pending, start] = useTransition();
+
+  const selectedMake = params.get('make') ?? '';
+  const makes = useFacets('Manufacturer', serverMakes);
+  const models = useFacets(
+    'ModelGroup', serverModels, { make: selectedMake }, Boolean(selectedMake),
+  );
 
   // Every control writes to the URL so results stay shareable and the server
   // components re-render with the new filters.
