@@ -38,10 +38,10 @@ export default function ClientHero({ rate }: { rate: number }) {
             src={src}
             alt=""
             priority
-            className="absolute inset-0 h-full w-full object-cover opacity-45"
+            className="absolute inset-0 -z-10 h-full w-full object-cover opacity-45"
           />
           <div
-            className="absolute inset-0 bg-linear-to-r from-ink via-ink/85 to-ink/30"
+            className="absolute inset-0 -z-10 bg-linear-to-r from-ink via-ink/85 to-ink/30"
             aria-hidden
           />
         </>
