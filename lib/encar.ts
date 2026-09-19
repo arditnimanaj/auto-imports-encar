@@ -8,17 +8,17 @@
 
 import {
   buildQuery, buildFeaturedQuery, extractFacets, metaUrl, normalize,
-  searchUrl, SEARCH_URL,
+  searchUrl, vehicleUrl, SEARCH_URL,
   type Car, type Filters, type SearchResponse, type SortKey,
+  type VehicleDetail,
 } from './encar-shared';
 
 export {
   buildQuery, buildFeaturedQuery, FEATURED_MAKES, imageUrl, normalize,
-  searchUrl, SORTS, YEAR_FLOOR,
-  type Car, type Filters, type SortKey,
+  searchUrl, vehicleUrl, SORTS, YEAR_FLOOR,
+  type Car, type Filters, type SortKey, type VehicleDetail,
 } from './encar-shared';
 
-const DETAIL = 'https://api.encar.com/v1/readside/vehicle';
 
 const BROWSER_HEADERS = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
@@ -94,9 +94,23 @@ export async function getFeatured(): Promise<SearchOutcome> {
   }
 }
 
-/** Not blocked from server egress, so detail pages stay fully server-rendered. */
-export async function getVehicle(id: string): Promise<VehicleDetail> {
-  return getJson<VehicleDetail>(`${DETAIL}/${encodeURIComponent(id)}`, 600);
+export type VehicleOutcome =
+  | { status: 'ok'; car: VehicleDetail }
+  /** Encar answered and said there is no such car. */
+  | { status: 'missing' }
+  /** We never got an answer -- the browser should try instead. */
+  | { status: 'unavailable' };
+
+export async function getVehicle(id: string): Promise<VehicleOutcome> {
+  try {
+    const car = await getJson<VehicleDetail>(vehicleUrl(id), 600);
+    return { status: 'ok', car };
+  } catch (e) {
+    // A real 404 means the listing is gone; anything else means we were
+    // refused, and showing "not found" for that would be a lie.
+    if ((e as { status?: number }).status === 404) return { status: 'missing' };
+    return { status: 'unavailable' };
+  }
 }
 
 /**
@@ -118,20 +132,3 @@ async function facets(name: string, filters: Filters) {
   const data = await getJson<unknown>(metaUrl(filters), 3600).catch(() => null);
   return data ? extractFacets(data, name) : [];
 }
-
-// The detail endpoint names the photo field `path`; search calls it `location`.
-export type VehicleDetail = {
-  vehicleId: number;
-  category: {
-    manufacturerName: string; manufacturerEnglishName?: string;
-    modelName: string; modelGroupEnglishName?: string;
-    gradeName?: string; gradeEnglishName?: string; yearMonth: string;
-  };
-  spec: {
-    mileage?: number; displacement?: number; fuelName?: string;
-    transmissionName?: string; colorName?: string; bodyName?: string;
-    seatCount?: number;
-  };
-  advertisement: { price?: number };
-  photos: { path: string; type: string; code: string }[];
-};

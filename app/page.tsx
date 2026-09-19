@@ -4,6 +4,7 @@ import CarCard from '@/components/CarCard';
 import Reveal from '@/components/Reveal';
 import { Button } from '@/components/ui/button';
 import ClientCars from '@/components/ClientCars';
+import ClientCount from '@/components/ClientCount';
 import { buildQuery, getFeatured, getMakes, searchCars } from '@/lib/encar';
 import { getRate } from '@/lib/fx';
 import { eur, toEur } from '@/lib/format';
@@ -176,8 +177,11 @@ function Hero({
 }
 
 function RouteStrip({ stock }: { stock: number }) {
-  const facts = [
-    { value: stock ? stock.toLocaleString('en-US') : '—', label: 'cars in stock right now' },
+  const facts: { value: React.ReactNode; label: string }[] = [
+    {
+      value: stock ? stock.toLocaleString('en-US') : <ClientCount />,
+      label: 'cars in stock right now',
+    },
     { value: '2026', label: 'the oldest model year we list' },
     { value: SITE.route.join(' → '), label: 'the route your car takes' },
   ];

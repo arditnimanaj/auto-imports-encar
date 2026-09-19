@@ -165,3 +165,26 @@ export function searchUrlFor(q: string, offset: number, limit: number, sort: Sor
   return `${SEARCH_URL}?count=true&q=${encodeURIComponent(q)}`
     + `&sr=${encodeURIComponent(`|${SORTS[sort]}|${offset}|${limit}`)}`;
 }
+
+export const DETAIL_URL = 'https://api.encar.com/v1/readside/vehicle';
+
+export function vehicleUrl(id: string): string {
+  return `${DETAIL_URL}/${encodeURIComponent(id)}`;
+}
+
+// The detail endpoint names the photo field `path`; search calls it `location`.
+export type VehicleDetail = {
+  vehicleId: number;
+  category: {
+    manufacturerName: string; manufacturerEnglishName?: string;
+    modelName: string; modelGroupEnglishName?: string;
+    gradeName?: string; gradeEnglishName?: string; yearMonth: string;
+  };
+  spec: {
+    mileage?: number; displacement?: number; fuelName?: string;
+    transmissionName?: string; colorName?: string; bodyName?: string;
+    seatCount?: number;
+  };
+  advertisement: { price?: number };
+  photos: { path: string; type: string; code: string }[];
+};
