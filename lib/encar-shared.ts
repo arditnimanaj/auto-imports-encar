@@ -5,8 +5,9 @@
 export const SEARCH_URL = 'https://api.encar.com/search/car/list/premium';
 export const IMAGES = 'https://ci.encar.com';
 
-/** Only 2026-and-newer cars are ever shown. Year is stored as YYYYMM. */
-export const YEAR_FLOOR = 202601;
+/** Oldest model year listed. Year is stored as YYYYMM, so 2016 is 201601. */
+export const YEAR_FLOOR = 201601;
+export const YEAR_FLOOR_YEAR = 2016;
 
 export const SORTS = {
   newest: 'ModifiedDate',
@@ -42,6 +43,8 @@ export type Car = {
   transmission: string | null;
   region: string | null;
   imageUrl: string | null;
+  /** Raw CDN path, so callers can request a different size. */
+  photoPath: string | null;
 };
 
 /**
@@ -52,7 +55,7 @@ export type Car = {
 export function buildQuery(f: Filters = {}): string {
   // CarType.N = imported. SellType.일반 = outright sale: lease (리스) and rent
   // (렌트) listings quote a takeover/deposit figure in `Price`, not the car's
-  // price, so including them would show a 2026 BMW i5 at about EUR 700.
+  // price, so including them would show a late-model BMW i5 at about EUR 700.
   const clauses = ['Hidden.N', 'CarType.N', 'SellType.일반'];
   if (f.make) clauses.push(`Manufacturer.${f.make}`);
   if (f.fuel) clauses.push(`FuelType.${f.fuel}`);
@@ -77,8 +80,22 @@ export function searchUrl(
     + `&sr=${encodeURIComponent(`|${SORTS[sort]}|${offset}|${take}`)}`;
 }
 
-export function imageUrl(path?: string | null): string | null {
-  return path ? `${IMAGES}${path}` : null;
+/**
+ * Encar serves the bare photo URL at only 640x360. Its CDN will resize, so
+ * ask for something worth showing: 'card' returns 1160x696 (~100KB), 'full'
+ * returns the 2200px original for full-screen viewing. Next/Image re-encodes
+ * either one down to the size actually rendered.
+ */
+export type ImageVariant = 'card' | 'full';
+
+export function imageUrl(
+  path?: string | null, variant: ImageVariant = 'card',
+): string | null {
+  if (!path) return null;
+  const url = `${IMAGES}${path}`;
+  return variant === 'full'
+    ? `${url}?impolicy=widthRate&rw=2200`
+    : `${url}?impolicy=heightRate&rh=696&cw=1160&ch=696&cg=Center`;
 }
 
 export type RawCar = {
@@ -102,6 +119,7 @@ export function normalize(r: RawCar): Car {
     transmission: r.Transmission ?? null,
     region: r.OfficeCityState ?? null,
     imageUrl: imageUrl(r.Photos?.[0]?.location),
+    photoPath: r.Photos?.[0]?.location ?? null,
   };
 }
 

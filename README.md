@@ -20,65 +20,38 @@ Motion · TypeScript. No API routes and no separate backend.
 
 ## How the stock is fetched
 
-Encar drops `/search/car/list/*` at the network layer for datacenter egress —
-no HTTP response at all, the connection dies in ~50ms. It is path-specific:
-`api.encar.com/`, `/search`, and `/v1/readside/vehicle/{id}` all answer
-normally from the same host. No request header changes this, because the
-connection closes before anything is parsed.
+**Everything comes from the browser.** Nothing in this app fetches stock on the
+server.
 
-It does serve browsers cross-origin, reflecting the request Origin and
-allowing credentials. So the app tries the server first and falls back:
+Encar drops `/search/car/list/*` and `/v1/readside/vehicle/*` at the network
+layer for datacenter egress — no HTTP response at all, the connection dies in
+~50ms. Measured from Vercel, roughly 2 requests in 15 get through. No request
+header changes this, because the connection closes before anything is parsed.
 
-| | Server (`lib/encar.ts`) | Browser (`components/ClientCars`) |
-|---|---|---|
-| Search + facets | tried first | used when the server was refused |
-| Detail pages | always — not blocked | never needed |
+It serves browsers normally, reflecting the request Origin and allowing
+credentials. So a server attempt was only ever a slow round-trip that usually
+failed before the browser retried anyway — the page shell now ships
+immediately and the client fetches:
 
-`lib/encar-shared.ts` holds the query building and normalising both sides use,
-so the two paths cannot drift. `searchCars` reports `unavailable` instead of
-throwing, and that flag is what switches a section to the browser.
-
-Server rendering happens wherever Encar answers — local development and any
-unblocked host keep full SSR and its SEO. Only where the server is refused does
-rendering move client-side, which is the one real cost of this arrangement:
-crawlers see an empty listing grid on such a deployment.
-
-## Where the data comes from
-
-There is **no official Encar API**. This uses the internal JSON endpoints that
-encar.com's own frontend calls. They need no token, cookie or special headers.
-
-| | |
+| | Where it runs |
 |---|---|
-| search | `api.encar.com/search/car/list/premium?count=true&q=<dsl>&sr=\|<sort>\|<offset>\|<limit>` |
-| makes / models | same host + `&inav=\|Metadata\|Sort` — filter facets with live counts |
-| detail | `api.encar.com/v1/readside/vehicle/{id}` |
-| images | `https://ci.encar.com` + the photo path |
-| FX | `open.er-api.com/v6/latest/KRW`, cached 1h, hardcoded fallback |
+| Listings, facets, car details, counts | browser (`components/Client*.tsx`) |
+| Currency rate | server — `open.er-api.com` is not blocked, cached 1h |
 
-### The `q` filter DSL
+`lib/encar-shared.ts` holds the query building and normalising. Photos skip
+`next/image` and come straight from Encar's CDN at the size requested, since
+the optimiser would put a server hop in front of every image for a catalogue
+far too large to cache usefully.
 
-Clauses join with `._.`; the expression closes with `.)`. **That trailing dot is
-required** or the response body comes back empty.
-
-    (And.Hidden.N._.CarType.N._.SellType.일반._.Year.range(202601..)._.Manufacturer.BMW._.ModelGroup.X5.)
-
-- `CarType.N` = imported · `Year` is `YYYYMM` · `Price` is 만원 (10k KRW)
-- Sort keys: `ModifiedDate`, `PriceAsc`, `PriceDesc`, `MileageAsc`,
-  `MileageDesc`, `Year`. Plain `Price` is rejected. Page size caps at 200.
-- An `Or` branch only works when the whole expression is nested — flattening it
-  into the base `And` silently returns nothing:
-
-      (And.(And.<base>.)_.(Or.Manufacturer.BMW._.Manufacturer.벤츠.))
-
-- Mercedes is **`벤츠`**, not `메르세데스-벤츠` (which returns 0).
+The cost is SEO: crawlers see an empty listing grid. Licensed access or a
+vendor feed would allow server rendering to return.
 
 ## Data quirks this app works around
 
 - **Lease and rent listings quote the wrong price.** For `SellType` 리스/렌트,
   `Price` is a takeover or deposit figure, not the car's price — a 2026 BMW i5
-  shows up at about €700. The base query pins `SellType.일반`, cutting the 2026
-  imported pool from 2,799 to 1,746 but making every price mean the same thing.
+  shows up at about €700. The base query pins `SellType.일반`, cutting the
+  imported pool roughly in half but making every price mean the same thing.
 - **Photos repeat within a listing.** One car returned 24 photos of which 18
   were distinct, so `/car/[id]` dedupes by URL.
 - **Encar returns duplicate listings** — the same car under different ids, some
@@ -98,10 +71,6 @@ required** or the response body comes back empty.
 - **Text search scans a window.** Encar has no free-text parameter, so the
   search box pulls the first 200 results of the current filter and
   substring-matches. The UI says so.
-- **Listing pages lose SSR wherever Encar refuses the server.** On such a host
-  the grid renders in the browser, so crawlers see an empty page. Licensed
-  access or a vendor feed restores server rendering with no code change —
-  everything already goes through `searchCars`.
 - **Options are not shown.** The detail endpoint returns bare numeric codes
   (`001`…`097`). The only named catalogue found — 62 options in the filter
   metadata — is a *different* list the codes do not index into, so rather than

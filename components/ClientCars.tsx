@@ -155,7 +155,7 @@ export default function ClientCars({
   );
 }
 
-/** Mirrors getFeatured() on the server: 7 German, 3 other, shuffled. */
+/** Nine cars: six from the German four, three from anything else, shuffled. */
 async function pickFeatured(): Promise<Car[]> {
   const pick = async (q: string, want: number) => {
     const head = await fetch(searchUrlFor(q, 0, 1));
@@ -169,14 +169,14 @@ async function pickFeatured(): Promise<Car[]> {
   };
 
   const [german, rest] = await Promise.all([
-    pick(buildFeaturedQuery(), 7),
+    pick(buildFeaturedQuery(), 6),
     pick(buildQuery(), 3),
   ]);
   const seen = new Set<string>();
   return [...german, ...rest]
     .filter((c) => !seen.has(c.id) && seen.add(c.id))
     .sort(() => Math.random() - 0.5)
-    .slice(0, 10);
+    .slice(0, 9);
 }
 
 function Pager({

@@ -1,11 +1,11 @@
 'use client';
 
-import Image from 'next/image';
+import CarPhoto from '@/components/CarPhoto';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-export type Photo = { src: string; label: string };
+export type Photo = { src: string; full: string; label: string };
 
 /** Only this many photos load with the page; the rest wait for the viewer. */
 const INITIAL = 5;
@@ -64,13 +64,11 @@ export default function Gallery({ photos, alt }: { photos: Photo[]; alt: string 
         className="relative block aspect-16/9 w-full overflow-hidden rounded-lg bg-mist"
         aria-label={`Open photo 1 of ${photos.length}`}
       >
-        <Image
-          src={lead.src}
+        <CarPhoto
+          src={lead.full}
           alt={alt}
-          fill
           priority
-          sizes="(max-width: 1024px) 100vw, 60vw"
-          className="object-cover"
+          className="absolute inset-0 h-full w-full object-cover"
         />
       </button>
 
@@ -84,12 +82,10 @@ export default function Gallery({ photos, alt }: { photos: Photo[]; alt: string 
             className="relative aspect-4/3 overflow-hidden rounded-lg bg-mist"
             aria-label={`Open photo ${i + 2} of ${photos.length}`}
           >
-            <Image
+            <CarPhoto
               src={p.src}
               alt=""
-              fill
-              sizes="(max-width: 640px) 33vw, 18vw"
-              className="object-cover transition-transform duration-300 hover:scale-105"
+              className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 hover:scale-105"
             />
           </button>
         ))}
@@ -142,13 +138,11 @@ export default function Gallery({ photos, alt }: { photos: Photo[]; alt: string 
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
               >
-                <Image
-                  src={photos[open].src}
+                <CarPhoto
+                  src={photos[open].full}
                   alt={`${alt} — photo ${open + 1}`}
-                  fill
-                  sizes="100vw"
-                  className="object-contain"
                   priority
+                  className="absolute inset-0 h-full w-full object-contain"
                 />
               </motion.div>
               <Arrow side="right" onClick={(e) => { e.stopPropagation(); move(1); }} />
@@ -173,7 +167,7 @@ export default function Gallery({ photos, alt }: { photos: Photo[]; alt: string 
                       : 'opacity-50 hover:opacity-90'
                   }`}
                 >
-                  <Image src={p.src} alt="" fill sizes="96px" className="object-cover" />
+                  <CarPhoto src={p.src} alt="" className="absolute inset-0 h-full w-full object-cover" />
                 </button>
               ))}
             </div>

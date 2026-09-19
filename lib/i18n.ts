@@ -88,7 +88,7 @@ export const FUEL_OPTIONS = [
  * that for every card would mean one extra request per listing.
  *
  * Instead these are the model/trim terms that actually occur in the data
- * (sampled across the live 2026 stock), transliterated term by term. Anything
+ * (sampled across live stock), transliterated term by term. Anything
  * unlisted is left as-is rather than mangled.
  */
 const TERMS: Record<string, string> = {

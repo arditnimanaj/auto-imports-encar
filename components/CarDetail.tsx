@@ -37,9 +37,10 @@ export default function CarDetail({
   const seen = new Set<string>();
   for (const p of car.photos ?? []) {
     const src = imageUrl(p.path);
-    if (!src || seen.has(src)) continue;
+    const full = imageUrl(p.path, 'full');
+    if (!src || !full || seen.has(src)) continue;
     seen.add(src);
-    photos.push({ src, label: p.type });
+    photos.push({ src, full, label: p.type });
   }
 
   const specs: [string, string][] = [

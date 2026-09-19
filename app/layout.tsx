@@ -19,7 +19,7 @@ const body = Manrope({
 export const metadata: Metadata = {
   title: { default: `${SITE.name} — ${SITE.tagline}`, template: `%s · ${SITE.name}` },
   description:
-    'Import 2026 cars from Korea to Kosovo. Live stock, euro prices, shipping and customs handled door to door.',
+    'Import cars from Korea to Kosovo — 2016 models and newer. Live stock, euro prices, shipping and customs handled door to door.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

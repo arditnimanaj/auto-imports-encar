@@ -1,6 +1,6 @@
-import Image from 'next/image';
+import CarPhoto from '@/components/CarPhoto';
 import Link from 'next/link';
-import type { Car } from '@/lib/encar';
+import type { Car } from '@/lib/encar-shared';
 import { eur, km, toEur, ym } from '@/lib/format';
 import { fuelEn, makeEn, modelEn } from '@/lib/i18n';
 import { Badge } from '@/components/ui/badge';
@@ -15,13 +15,11 @@ export default function CarCard({
     >
       <div className="relative aspect-4/3 overflow-hidden bg-mist">
         {car.imageUrl && (
-          <Image
+          <CarPhoto
             src={car.imageUrl}
             alt={`${makeEn(car.make)} ${modelEn(car.model)}`}
-            fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
             priority={priority}
-            className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
           />
         )}
         {car.mileageKm != null && car.mileageKm < 1000 && (

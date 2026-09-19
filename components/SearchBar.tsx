@@ -8,14 +8,11 @@ import { Input } from '@/components/ui/input';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
+import { YEAR_FLOOR_YEAR } from '@/lib/encar-shared';
 import { FUEL_OPTIONS, makeEn, modelEn } from '@/lib/i18n';
 import { useFacets } from '@/lib/use-facets';
 
-type Props = {
-  makes: { name: string; count: number }[];
-  /** Empty until a make is chosen -- Encar scopes models to a manufacturer. */
-  models: { name: string; count: number }[];
-};
+
 
 const SORTS = [
   { value: 'newest', label: 'Newest first' },
@@ -36,16 +33,21 @@ const BUDGETS = [
 
 const ANY = 'any';
 
-export default function SearchBar({ makes: serverMakes, models: serverModels }: Props) {
+/** Model years we list, newest first. */
+const YEARS = Array.from(
+  { length: new Date().getFullYear() - YEAR_FLOOR_YEAR + 1 },
+  (_, i) => new Date().getFullYear() - i,
+);
+
+export default function SearchBar() {
   const router = useRouter();
   const params = useSearchParams();
   const [pending, start] = useTransition();
 
   const selectedMake = params.get('make') ?? '';
-  const makes = useFacets('Manufacturer', serverMakes);
-  const models = useFacets(
-    'ModelGroup', serverModels, { make: selectedMake }, Boolean(selectedMake),
-  );
+  // Facets come from the browser too, so nothing here depends on the server.
+  const makes = useFacets('Manufacturer', []);
+  const models = useFacets('ModelGroup', [], { make: selectedMake }, Boolean(selectedMake));
 
   // Every control writes to the URL so results stay shareable and the server
   // components re-render with the new filters.
@@ -60,7 +62,8 @@ export default function SearchBar({ makes: serverMakes, models: serverModels }: 
   }
 
   const get = (k: string) => params.get(k) ?? '';
-  const active = ['q', 'make', 'model', 'fuel', 'priceMax', 'sort'].filter((k) => get(k));
+  const active = ['q', 'make', 'model', 'fuel', 'yearFrom', 'priceMax', 'sort']
+    .filter((k) => get(k));
 
   return (
     <div className="sticky top-[4.5rem] z-30 border-b border-border bg-paper/95 backdrop-blur supports-backdrop-filter:bg-paper/80">
@@ -131,6 +134,20 @@ export default function SearchBar({ makes: serverMakes, models: serverModels }: 
             <SelectItem value={ANY}>Any fuel</SelectItem>
             {FUEL_OPTIONS.map((f) => (
               <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={get('yearFrom') || ANY} onValueChange={(v) => apply({ yearFrom: String(v ?? '') })}>
+          <SelectTrigger className="w-36" aria-label="Year from">
+            <SelectValue>
+              {(v: string) => (v && v !== ANY ? `${v} or newer` : 'Any year')}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ANY}>Any year</SelectItem>
+            {YEARS.map((y) => (
+              <SelectItem key={y} value={String(y)}>{y} or newer</SelectItem>
             ))}
           </SelectContent>
         </Select>
