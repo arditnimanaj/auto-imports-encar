@@ -1,0 +1,202 @@
+'use client';
+
+import Image from 'next/image';
+import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+export type Photo = { src: string; label: string };
+
+/** Only this many photos load with the page; the rest wait for the viewer. */
+const INITIAL = 5;
+
+export default function Gallery({ photos, alt }: { photos: Photo[]; alt: string }) {
+  const [open, setOpen] = useState<number | null>(null);
+  const reduced = useReducedMotion();
+  const stripRef = useRef<HTMLDivElement>(null);
+
+  const move = useCallback(
+    (d: number) =>
+      setOpen((i) => (i == null ? i : (i + d + photos.length) % photos.length)),
+    [photos.length],
+  );
+
+  useEffect(() => {
+    if (open == null) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(null);
+      if (e.key === 'ArrowRight') move(1);
+      if (e.key === 'ArrowLeft') move(-1);
+    };
+    window.addEventListener('keydown', onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [open, move]);
+
+  // Keep the active thumbnail visible as you arrow through the set.
+  useEffect(() => {
+    if (open == null) return;
+    stripRef.current
+      ?.querySelector<HTMLElement>(`[data-index="${open}"]`)
+      ?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: reduced ? 'auto' : 'smooth' });
+  }, [open, reduced]);
+
+  if (!photos.length) {
+    return (
+      <p className="rounded-lg border border-dashed border-border py-12 text-center text-sm text-muted-foreground">
+        No photos for this car yet.
+      </p>
+    );
+  }
+
+  const [lead, ...rest] = photos;
+  const thumbs = rest.slice(0, INITIAL - 1);
+  const hidden = rest.length - thumbs.length;
+
+  return (
+    <>
+      <button
+        onClick={() => setOpen(0)}
+        className="relative block aspect-16/9 w-full overflow-hidden rounded-lg bg-mist"
+        aria-label={`Open photo 1 of ${photos.length}`}
+      >
+        <Image
+          src={lead.src}
+          alt={alt}
+          fill
+          priority
+          sizes="(max-width: 1024px) 100vw, 60vw"
+          className="object-cover"
+        />
+      </button>
+
+      {/* Four thumbnails plus a box for the remainder. Only these five images
+          are requested up front, however many the listing has. */}
+      <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-5">
+        {thumbs.map((p, i) => (
+          <button
+            key={p.src}
+            onClick={() => setOpen(i + 1)}
+            className="relative aspect-4/3 overflow-hidden rounded-lg bg-mist"
+            aria-label={`Open photo ${i + 2} of ${photos.length}`}
+          >
+            <Image
+              src={p.src}
+              alt=""
+              fill
+              sizes="(max-width: 640px) 33vw, 18vw"
+              className="object-cover transition-transform duration-300 hover:scale-105"
+            />
+          </button>
+        ))}
+
+        {hidden > 0 && (
+          <button
+            onClick={() => setOpen(INITIAL)}
+            className="grid aspect-4/3 place-items-center rounded-lg border border-border bg-mist/60 transition-colors hover:bg-mist"
+            aria-label={`Show the other ${hidden} photos`}
+          >
+            <span className="text-center">
+              <span className="numeric block font-display text-xl font-bold">+{hidden}</span>
+              <span className="text-xs text-muted-foreground">more</span>
+            </span>
+          </button>
+        )}
+      </div>
+
+      <AnimatePresence>
+        {open != null && (
+          <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Photo ${open + 1} of ${photos.length}`}
+            onClick={() => setOpen(null)}
+            className="fixed inset-0 z-50 flex flex-col bg-ink"
+            initial={reduced ? false : { opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={reduced ? undefined : { opacity: 0 }}
+            transition={{ duration: 0.18 }}
+          >
+            <div className="flex items-center justify-between px-4 py-3 text-mist">
+              <p className="numeric text-sm">{open + 1} of {photos.length}</p>
+              <button
+                onClick={() => setOpen(null)}
+                aria-label="Close photos"
+                className="grid h-10 w-10 place-items-center rounded-full bg-paper/10 transition-colors hover:bg-paper/20 hover:text-paper"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="relative flex min-h-0 flex-1 items-center justify-center px-2 md:px-16">
+              <Arrow side="left" onClick={(e) => { e.stopPropagation(); move(-1); }} />
+              <motion.div
+                key={open}
+                className="relative h-full w-full max-w-5xl"
+                onClick={(e) => e.stopPropagation()}
+                initial={reduced ? false : { opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <Image
+                  src={photos[open].src}
+                  alt={`${alt} — photo ${open + 1}`}
+                  fill
+                  sizes="100vw"
+                  className="object-contain"
+                  priority
+                />
+              </motion.div>
+              <Arrow side="right" onClick={(e) => { e.stopPropagation(); move(1); }} />
+            </div>
+
+            {/* Every photo, as a scrollable strip. */}
+            <div
+              ref={stripRef}
+              onClick={(e) => e.stopPropagation()}
+              className="no-scrollbar flex shrink-0 gap-2 overflow-x-auto px-4 py-4"
+            >
+              {photos.map((p, i) => (
+                <button
+                  key={p.src}
+                  data-index={i}
+                  onClick={() => setOpen(i)}
+                  aria-label={`Photo ${i + 1}`}
+                  aria-current={i === open}
+                  className={`relative h-16 w-24 shrink-0 overflow-hidden rounded transition-all ${
+                    i === open
+                      ? 'opacity-100 ring-2 ring-brass'
+                      : 'opacity-50 hover:opacity-90'
+                  }`}
+                >
+                  <Image src={p.src} alt="" fill sizes="96px" className="object-cover" />
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
+}
+
+function Arrow({
+  side, onClick,
+}: { side: 'left' | 'right'; onClick: (e: React.MouseEvent) => void }) {
+  const Icon = side === 'left' ? ChevronLeft : ChevronRight;
+  return (
+    <button
+      onClick={onClick}
+      aria-label={side === 'left' ? 'Previous photo' : 'Next photo'}
+      className={`absolute z-10 grid h-11 w-11 place-items-center rounded-full bg-paper/10 text-mist transition-colors hover:bg-paper/20 hover:text-paper ${
+        side === 'left' ? 'left-1 md:left-4' : 'right-1 md:right-4'
+      }`}
+    >
+      <Icon className="h-6 w-6" />
+    </button>
+  );
+}
