@@ -14,8 +14,32 @@ from Encar, priced in euro.
 | `/contact` | Enquiry form and how importing works |
 
 **Stack**: Next 16 (App Router) · React 19 · Tailwind v4 · shadcn/ui (Base UI) ·
-Motion · TypeScript. Encar is called straight from server components in
-`lib/encar.ts` — no API routes, no separate backend, no CORS.
+Motion · TypeScript. No API routes and no separate backend.
+
+## How the stock is fetched
+
+Encar drops `/search/car/list/*` at the network layer for datacenter egress —
+no HTTP response at all, the connection dies in ~50ms. It is path-specific:
+`api.encar.com/`, `/search`, and `/v1/readside/vehicle/{id}` all answer
+normally from the same host. No request header changes this, because the
+connection closes before anything is parsed.
+
+It does serve browsers cross-origin, reflecting the request Origin and
+allowing credentials. So the app tries the server first and falls back:
+
+| | Server (`lib/encar.ts`) | Browser (`components/ClientCars`) |
+|---|---|---|
+| Search + facets | tried first | used when the server was refused |
+| Detail pages | always — not blocked | never needed |
+
+`lib/encar-shared.ts` holds the query building and normalising both sides use,
+so the two paths cannot drift. `searchCars` reports `unavailable` instead of
+throwing, and that flag is what switches a section to the browser.
+
+Server rendering happens wherever Encar answers — local development and any
+unblocked host keep full SSR and its SEO. Only where the server is refused does
+rendering move client-side, which is the one real cost of this arrangement:
+crawlers see an empty listing grid on such a deployment.
 
 ## Where the data comes from
 
@@ -69,9 +93,13 @@ required** or the response body comes back empty.
   mean one extra request per card. Instead `lib/i18n.ts` maps the Korean terms
   that actually occur in the data (sampled from live stock — only ~60 distinct
   terms) to English. Unmapped terms pass through unchanged rather than mangled.
-- **Text search is client-side over a window.** Encar has no free-text
-  parameter, so the search box scans the first 200 results of the current filter
-  and substring-matches. The UI says so.
+- **Text search scans a window.** Encar has no free-text parameter, so the
+  search box pulls the first 200 results of the current filter and
+  substring-matches. The UI says so.
+- **Listing pages lose SSR wherever Encar refuses the server.** On such a host
+  the grid renders in the browser, so crawlers see an empty page. Licensed
+  access or a vendor feed restores server rendering with no code change —
+  everything already goes through `searchCars`.
 - **Options are not shown.** The detail endpoint returns bare numeric codes
   (`001`…`097`). The only named catalogue found — 62 options in the filter
   metadata — is a *different* list the codes do not index into, so rather than
