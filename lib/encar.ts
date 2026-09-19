@@ -7,12 +7,14 @@
 // The detail endpoint is not blocked and stays server-rendered.
 
 import {
-  buildQuery, extractFacets, metaUrl, normalize, searchUrl, SEARCH_URL,
+  buildQuery, buildFeaturedQuery, extractFacets, metaUrl, normalize,
+  searchUrl, SEARCH_URL,
   type Car, type Filters, type SearchResponse, type SortKey,
 } from './encar-shared';
 
 export {
-  buildQuery, imageUrl, normalize, searchUrl, SORTS, YEAR_FLOOR,
+  buildQuery, buildFeaturedQuery, FEATURED_MAKES, imageUrl, normalize,
+  searchUrl, SORTS, YEAR_FLOOR,
   type Car, type Filters, type SortKey,
 } from './encar-shared';
 
@@ -57,19 +59,6 @@ export async function searchCars(
   } catch {
     return { count: 0, cars: [], unavailable: true };
   }
-}
-
-/** The four German makes the homepage sample is weighted toward. */
-export const FEATURED_MAKES = ['BMW', '벤츠', '아우디', '폭스바겐'];
-
-/**
- * An `Or` over manufacturers. Encar only accepts an Or branch when the whole
- * expression is nested as (And.(And.<base>.)_.(Or.<clauses>.)) -- flattening it
- * into the base And returns an empty body, not an error.
- */
-export function buildFeaturedQuery(): string {
-  const or = FEATURED_MAKES.map((m) => `Manufacturer.${m}`).join('._.');
-  return `(And.${buildQuery()}_.(Or.${or}.))`;
 }
 
 /**

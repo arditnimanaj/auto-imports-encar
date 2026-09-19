@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import CarCard from '@/components/CarCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
-  normalize, searchUrl,
+  buildFeaturedQuery, buildQuery, normalize, searchUrl, searchUrlFor,
   type Car, type Filters, type SearchResponse, type SortKey,
 } from '@/lib/encar-shared';
 
@@ -21,8 +21,12 @@ type Props = {
   className?: string;
   /** Substring match applied client-side, mirroring the server path. */
   query?: string;
-  /** Draw from a random offset, for the homepage sample. */
-  random?: boolean;
+  /**
+   * Homepage sample: seven cars from the German four plus three from anything
+   * else, each drawn from a random offset. A single random window would return
+   * ten consecutive listings, which cluster by make.
+   */
+  featured?: boolean;
   /** When set, the component also renders the result count and pagination. */
   meta?: { page: number; pageSize: number; params: Record<string, string>; basePath: string };
 };
@@ -36,14 +40,14 @@ type Props = {
  */
 export default function ClientCars({
   filters, offset = 0, limit = 24, sort = 'newest', rate, onCount, className,
-  query, random, meta,
+  query, featured, meta,
 }: Props) {
   const [count, setCount] = useState<number | null>(null);
   const [state, setState] = useState<
     { status: 'loading' } | { status: 'ready'; cars: Car[] } | { status: 'error' }
   >({ status: 'loading' });
 
-  const key = JSON.stringify([filters, offset, limit, sort, query, random]);
+  const key = JSON.stringify([filters, offset, limit, sort, query, featured]);
 
   useEffect(() => {
     let cancelled = false;
@@ -53,17 +57,17 @@ export default function ClientCars({
       try {
         // With a text query we scan a window and match locally, as the server
         // path does -- Encar has no free-text parameter.
-        const take = query ? 200 : limit;
-        let from = query ? 0 : offset;
-
-        if (random) {
-          // One cheap call for the total, then a window starting anywhere in it.
-          const head = await fetch(searchUrl(filters, { offset: 0, limit: 1, sort }));
-          if (!head.ok) throw new Error(String(head.status));
-          const total = ((await head.json()) as SearchResponse).Count ?? 0;
-          from = Math.max(0, Math.floor(Math.random() * Math.max(1, total - limit)));
+        if (featured) {
+          const cars = await pickFeatured();
+          if (cancelled) return;
+          onCount?.(cars.length);
+          setCount(cars.length);
+          setState({ status: 'ready', cars });
+          return;
         }
 
+        const take = query ? 200 : limit;
+        const from = query ? 0 : offset;
         const res = await fetch(searchUrl(filters, { offset: from, limit: take, sort }));
         if (!res.ok) throw new Error(String(res.status));
         const data = (await res.json()) as SearchResponse;
@@ -149,6 +153,30 @@ export default function ClientCars({
       {meta && count != null && <Pager meta={meta} count={count} />}
     </>
   );
+}
+
+/** Mirrors getFeatured() on the server: 7 German, 3 other, shuffled. */
+async function pickFeatured(): Promise<Car[]> {
+  const pick = async (q: string, want: number) => {
+    const head = await fetch(searchUrlFor(q, 0, 1));
+    if (!head.ok) throw new Error(String(head.status));
+    const total = ((await head.json()) as SearchResponse).Count ?? 0;
+    if (!total) return [];
+    const offset = Math.max(0, Math.floor(Math.random() * Math.max(1, total - want)));
+    const page = await fetch(searchUrlFor(q, offset, want));
+    if (!page.ok) throw new Error(String(page.status));
+    return (((await page.json()) as SearchResponse).SearchResults ?? []).map(normalize);
+  };
+
+  const [german, rest] = await Promise.all([
+    pick(buildFeaturedQuery(), 7),
+    pick(buildQuery(), 3),
+  ]);
+  const seen = new Set<string>();
+  return [...german, ...rest]
+    .filter((c) => !seen.has(c.id) && seen.add(c.id))
+    .sort(() => Math.random() - 0.5)
+    .slice(0, 10);
 }
 
 function Pager({

@@ -147,3 +147,21 @@ export function extractFacets(
     .map((f) => ({ name: f.Value, count: f.Count }))
     .sort((a, b) => b.count - a.count);
 }
+
+/** The four German makes the homepage sample is weighted toward. */
+export const FEATURED_MAKES = ['BMW', '벤츠', '아우디', '폭스바겐'];
+
+/**
+ * An `Or` over manufacturers. Encar only accepts an Or branch when the whole
+ * expression is nested as (And.(And.<base>.)_.(Or.<clauses>.)) -- flattening it
+ * into the base And returns an empty body, not an error.
+ */
+export function buildFeaturedQuery(): string {
+  const or = FEATURED_MAKES.map((m) => `Manufacturer.${m}`).join('._.');
+  return `(And.${buildQuery()}_.(Or.${or}.))`;
+}
+
+export function searchUrlFor(q: string, offset: number, limit: number, sort: SortKey = 'newest') {
+  return `${SEARCH_URL}?count=true&q=${encodeURIComponent(q)}`
+    + `&sr=${encodeURIComponent(`|${SORTS[sort]}|${offset}|${limit}`)}`;
+}

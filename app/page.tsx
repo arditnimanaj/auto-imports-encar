@@ -41,7 +41,7 @@ export default async function Home() {
           <ClientCars
             filters={{}}
             limit={10}
-            random
+            featured
             rate={rate.krwToEur}
             className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3"
           />
