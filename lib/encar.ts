@@ -7,6 +7,14 @@ const SEARCH_META = 'https://api.encar.com/search/car/list/general';
 const DETAIL = 'https://api.encar.com/v1/readside/vehicle';
 const IMAGES = 'https://ci.encar.com';
 
+const BROWSER_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+  'Accept': 'application/json, text/javascript, */*; q=0.01',
+  'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8',
+  'Referer': 'https://www.encar.com/',
+  'Origin': 'https://www.encar.com',
+};
+
 /** Only 2026-and-newer cars are ever shown. Year is stored as YYYYMM. */
 export const YEAR_FLOOR = 202601;
 
@@ -72,19 +80,8 @@ export function buildQuery(f: Filters = {}): string {
 }
 
 async function getJson<T>(url: string, revalidate = 300): Promise<T> {
-  // Encar rejects requests from some hosting egress. Sending the headers a
-  // browser would, and running the functions from Seoul (see vercel.json),
-  // keeps it answering from a deployed environment as well as locally.
   const res = await fetch(url, {
-    headers: {
-      Accept: 'application/json, text/plain, */*',
-      'Accept-Language': 'ko-KR,ko;q=0.9,en;q=0.8',
-      'User-Agent':
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
-        + ' (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36',
-      Referer: 'https://www.encar.com/',
-      Origin: 'https://www.encar.com',
-    },
+    headers: BROWSER_HEADERS,
     next: { revalidate },
   });
   if (!res.ok) {
