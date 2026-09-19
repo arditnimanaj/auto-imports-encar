@@ -25,7 +25,3 @@ export async function getRate(): Promise<Rate> {
     return { krwToEur: FALLBACK, updated: null, live: false };
   }
 }
-
-export function toEur(krw: number | null, rate: number): number | null {
-  return krw == null ? null : Math.round(krw * rate);
-}

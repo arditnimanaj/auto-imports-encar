@@ -6,9 +6,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { getVehicle, imageUrl } from '@/lib/encar';
-import { eur, km, krw, ym } from '@/lib/format';
+import { eur, km, krw, toEur, ym } from '@/lib/format';
 import { bodyEn, colorEn, fuelEn, makeEn, modelEn, transmissionEn } from '@/lib/i18n';
-import { getRate, toEur } from '@/lib/fx';
+import { getRate } from '@/lib/fx';
 import { SITE } from '@/lib/site';
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {

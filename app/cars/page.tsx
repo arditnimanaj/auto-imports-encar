@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Suspense } from 'react';
 import CarCard from '@/components/CarCard';
+import ClientCars from '@/components/ClientCars';
 import SearchBar from '@/components/SearchBar';
 import { Button } from '@/components/ui/button';
 import { getMakes, getModelGroups, searchCars, SORTS, type Car, type SortKey } from '@/lib/encar';
@@ -41,22 +42,24 @@ export default async function CarsPage({ searchParams }: { searchParams: Promise
 
   let cars: Car[];
   let total: number;
+  let blocked: boolean;
 
   if (q) {
-    const { cars: window } = await searchCars(filters, { limit: SEARCH_WINDOW, sort })
-      .catch(() => ({ cars: [] as Car[] }));
+    const res = await searchCars(filters, { limit: SEARCH_WINDOW, sort });
     const needle = q.toLowerCase();
-    const hits = window.filter((c) =>
+    const hits = res.cars.filter((c) =>
       `${c.make} ${makeEn(c.make)} ${c.model} ${modelEn(c.model)} ${c.trim ?? ''} ${modelEn(c.trim)}`
         .toLowerCase().includes(needle));
     total = hits.length;
     cars = hits.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+    blocked = res.unavailable;
   } else {
     const res = await searchCars(filters, {
       offset: (page - 1) * PAGE_SIZE, limit: PAGE_SIZE, sort,
-    }).catch(() => ({ count: 0, cars: [] as Car[] }));
+    });
     cars = res.cars;
     total = res.count;
+    blocked = res.unavailable;
   }
 
   const lastPage = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -81,14 +84,35 @@ export default async function CarsPage({ searchParams }: { searchParams: Promise
         <h1 className="font-display text-2xl font-bold md:text-3xl">
           {make ? `${makeEn(make)}${model ? ` ${modelEn(model)}` : ''} in stock` : 'Cars in stock'}
         </h1>
-        <p className="mt-1.5 text-sm text-muted-foreground">
-          {total.toLocaleString('en-US')} {total === 1 ? 'car' : 'cars'}
-          {q && ` matching “${q}” within the first ${SEARCH_WINDOW} results`}
-          {!q && ' — 2026 models, shipped from Korea'}
-        </p>
+        {!blocked && (
+          <p className="mt-1.5 text-sm text-muted-foreground">
+            {total.toLocaleString('en-US')} {total === 1 ? 'car' : 'cars'}
+            {q && ` matching “${q}” within the first ${SEARCH_WINDOW} results`}
+            {!q && ' — 2026 models, shipped from Korea'}
+          </p>
+        )}
       </header>
 
-      {cars.length === 0 ? (
+      {blocked ? (
+        <ClientCars
+          filters={filters}
+          offset={(page - 1) * PAGE_SIZE}
+          limit={PAGE_SIZE}
+          sort={sort}
+          query={q || undefined}
+          rate={rate.krwToEur}
+          meta={{
+            page,
+            pageSize: PAGE_SIZE,
+            basePath: '/cars',
+            params: Object.fromEntries(
+              Object.entries(sp)
+                .map(([k, v]) => [k, one(v) ?? ''])
+                .filter(([k, v]) => v && k !== 'page'),
+            ),
+          }}
+        />
+      ) : cars.length === 0 ? (
         <div className="rounded-lg border border-dashed border-border py-20 text-center">
           <p className="font-medium">Nothing matches those filters yet.</p>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -108,7 +132,7 @@ export default async function CarsPage({ searchParams }: { searchParams: Promise
         </div>
       )}
 
-      {lastPage > 1 && (
+      {!blocked && lastPage > 1 && (
         <nav className="mt-10 flex items-center justify-center gap-3" aria-label="Pagination">
           <Button variant="outline" size="sm" disabled={page <= 1} nativeButton={false} render={<Link href={href(Math.max(1, page - 1))} />}>Previous</Button>
           <span className="numeric text-sm text-muted-foreground">

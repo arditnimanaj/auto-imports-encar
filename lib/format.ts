@@ -1,3 +1,7 @@
+export function toEur(krw: number | null, rate: number): number | null {
+  return krw == null ? null : Math.round(krw * rate);
+}
+
 export const eur = (n: number | null) =>
   n == null ? '—' : new Intl.NumberFormat('de-DE',
     { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n);

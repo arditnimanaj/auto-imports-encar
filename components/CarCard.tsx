@@ -1,9 +1,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Car } from '@/lib/encar';
-import { eur, km, ym } from '@/lib/format';
+import { eur, km, toEur, ym } from '@/lib/format';
 import { fuelEn, makeEn, modelEn } from '@/lib/i18n';
-import { toEur } from '@/lib/fx';
 import { Badge } from '@/components/ui/badge';
 
 export default function CarCard({

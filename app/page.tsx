@@ -3,25 +3,26 @@ import Link from 'next/link';
 import CarCard from '@/components/CarCard';
 import Reveal from '@/components/Reveal';
 import { Button } from '@/components/ui/button';
-import { getFeatured, getMakes, searchCars } from '@/lib/encar';
-import { getRate, toEur } from '@/lib/fx';
-import { eur } from '@/lib/format';
+import ClientCars from '@/components/ClientCars';
+import { buildQuery, getFeatured, getMakes, searchCars } from '@/lib/encar';
+import { getRate } from '@/lib/fx';
+import { eur, toEur } from '@/lib/format';
 import { makeEn, modelEn } from '@/lib/i18n';
 import { SITE } from '@/lib/site';
 
 export default async function Home() {
-  // Every stock call degrades to empty rather than failing the page -- the
-  // rest of the homepage still sells the business if Encar is unreachable.
-  const empty = { count: 0, cars: [] };
+  // Each call reports `unavailable` when Encar refused the server; those
+  // sections then re-fetch from the visitor's browser instead.
   const [rate, featured, newest, affordable, makes] = await Promise.all([
     getRate(),
-    getFeatured().catch(() => []),
-    searchCars({}, { limit: 8, sort: 'newest' }).catch(() => empty),
-    searchCars({ priceMax: 4000 }, { limit: 6, sort: 'priceAsc' }).catch(() => empty),
+    getFeatured(),
+    searchCars({}, { limit: 8, sort: 'newest' }),
+    searchCars({ priceMax: 4000 }, { limit: 6, sort: 'priceAsc' }),
     getMakes().catch(() => []),
   ]);
+  const blocked = featured.unavailable;
 
-  const hero = featured.find((c) => c.imageUrl) ?? newest.cars[0];
+  const hero = featured.cars.find((c) => c.imageUrl) ?? newest.cars[0];
   const stock = newest.count;
 
   return (
@@ -29,22 +30,32 @@ export default async function Home() {
       <Hero car={hero} stock={stock} rate={rate.krwToEur} />
       <RouteStrip stock={stock} />
 
-      {featured.length > 0 && (
+      {(featured.cars.length > 0 || blocked) && (
       <Section
         title="Ten cars, picked fresh"
         note="A fresh selection each visit, weighted to the German marques."
         href="/cars"
         linkLabel="Browse all cars"
       >
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
-          {featured.map((car, i) => (
-            <CarCard key={car.id} car={car} rate={rate.krwToEur} priority={i < 3} />
-          ))}
-        </div>
+        {blocked ? (
+          <ClientCars
+            filters={{}}
+            limit={10}
+            random
+            rate={rate.krwToEur}
+            className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3"
+          />
+        ) : (
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            {featured.cars.map((car, i) => (
+              <CarCard key={car.id} car={car} rate={rate.krwToEur} priority={i < 3} />
+            ))}
+          </div>
+        )}
       </Section>
       )}
 
-      {newest.cars.length > 0 && (
+      {newest.cars.length > 0 && !blocked && (
       <Section
         title="Just landed"
         note="The most recently listed cars in Korea, ready to quote."
@@ -84,18 +95,28 @@ export default async function Home() {
       </Section>
       )}
 
-      {affordable.cars.length > 0 && (
+      {(affordable.cars.length > 0 || blocked) && (
         <Section
           title="Under €25,000"
           note="Low-mileage 2026 cars at the accessible end of the range."
           href="/cars?priceMax=4000&sort=priceAsc"
           linkLabel="See all under €25,000"
         >
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
-            {affordable.cars.map((car) => (
-              <CarCard key={car.id} car={car} rate={rate.krwToEur} />
-            ))}
-          </div>
+          {blocked ? (
+            <ClientCars
+              filters={{ priceMax: 4000 }}
+              limit={6}
+              sort="priceAsc"
+              rate={rate.krwToEur}
+              className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3"
+            />
+          ) : (
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+              {affordable.cars.map((car) => (
+                <CarCard key={car.id} car={car} rate={rate.krwToEur} />
+              ))}
+            </div>
+          )}
         </Section>
       )}
 
