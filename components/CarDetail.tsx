@@ -118,8 +118,9 @@ export default function CarDetail({
           <p className="mt-3 text-xs text-muted-foreground">
             {!priceOnRequest && 'Price before shipping, duty and registration. '}
             Ask us for the landed total to {SITE.city}.
-            {!live && ' Conversion rate approximate.'}
-            {live && rateUpdated ? ` Rate from ${rateUpdated}.` : ''}
+            {/* The conversion note only means anything when there is a price. */}
+            {!priceOnRequest && !live && ' Conversion rate approximate.'}
+            {!priceOnRequest && live && rateUpdated ? ` Rate from ${rateUpdated}.` : ''}
           </p>
 
           <div className="mt-6 flex flex-col gap-2">
