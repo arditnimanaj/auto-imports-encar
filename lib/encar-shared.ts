@@ -30,6 +30,16 @@ export type Filters = {
   priceMax?: number;
 };
 
+/**
+ * Encar uses 9999만원 as a "price on request" (가격문의) placeholder rather than
+ * a real figure: 43 listings sit on exactly this value while the nine values
+ * below it hold 49 between them, and they span cars as different as a 72k km
+ * Audi A6 and a 187k km BMW 6-series GT. Prices above 10000 exist, so it is a
+ * sentinel and not a ceiling. Rendered as a real price it showed a 2017 520d
+ * with 86k km at about EUR 62,800 -- more than it cost new.
+ */
+export const PRICE_ON_REQUEST = 9999;
+
 export type Car = {
   id: string;
   make: string;
@@ -39,6 +49,8 @@ export type Car = {
   month: number;
   mileageKm: number | null;
   priceKrw: number | null;
+  /** Encar is withholding the figure; ask the dealer. */
+  priceOnRequest: boolean;
   fuel: string | null;
   transmission: string | null;
   region: string | null;
@@ -114,7 +126,9 @@ export function normalize(r: RawCar): Car {
     year: Math.floor(r.Year / 100),
     month: r.Year % 100,
     mileageKm: r.Mileage ?? null,
-    priceKrw: r.Price != null ? r.Price * 10_000 : null,
+    priceKrw:
+      r.Price != null && r.Price !== PRICE_ON_REQUEST ? r.Price * 10_000 : null,
+    priceOnRequest: r.Price === PRICE_ON_REQUEST,
     fuel: r.FuelType ?? null,
     transmission: r.Transmission ?? null,
     region: r.OfficeCityState ?? null,
@@ -203,6 +217,10 @@ export type VehicleDetail = {
     transmissionName?: string; colorName?: string; bodyName?: string;
     seatCount?: number;
   };
-  advertisement: { price?: number };
+  advertisement: {
+    price?: number;
+    /** Sparse: absent on a normal listing, "CONTRACT" once one is agreed. */
+    salesStatus?: string | null;
+  };
   photos: { path: string; type: string; code: string }[];
 };

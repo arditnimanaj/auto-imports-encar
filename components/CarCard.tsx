@@ -37,9 +37,15 @@ export default function CarCard({
           {modelEn(car.trim) || ' '}
         </p>
 
-        <p className="numeric mt-3 font-display text-xl font-bold text-brass">
-          {eur(toEur(car.priceKrw, rate))}
-        </p>
+        {car.priceOnRequest ? (
+          <p className="mt-3 font-display text-lg font-semibold text-muted-foreground">
+            Price on request
+          </p>
+        ) : (
+          <p className="numeric mt-3 font-display text-xl font-bold text-brass">
+            {eur(toEur(car.priceKrw, rate))}
+          </p>
+        )}
 
         <dl className="mt-3 grid grid-cols-3 gap-2 border-t border-border pt-3 text-xs">
           <div>

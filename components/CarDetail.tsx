@@ -4,7 +4,7 @@ import Gallery, { type Photo } from '@/components/Gallery';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { imageUrl, type VehicleDetail } from '@/lib/encar-shared';
+import { imageUrl, PRICE_ON_REQUEST, type VehicleDetail } from '@/lib/encar-shared';
 import { eur, km, krw, toEur, ym } from '@/lib/format';
 import { bodyEn, colorEn, fuelEn, makeEn, modelEn, transmissionEn } from '@/lib/i18n';
 import { SITE } from '@/lib/site';
@@ -29,7 +29,12 @@ export default function CarDetail({
   const trim = cat.gradeEnglishName || modelEn(cat.gradeName) || '';
   const year = Number(cat.yearMonth?.slice(0, 4));
   const month = Number(cat.yearMonth?.slice(4, 6));
-  const priceKrw = car.advertisement?.price != null ? car.advertisement.price * 10_000 : null;
+  // Encar only sets salesStatus once a sale is agreed, so anything other than
+  // an absent value means this car is no longer freely available.
+  const underContract = car.advertisement?.salesStatus === 'CONTRACT';
+  const rawPrice = car.advertisement?.price ?? null;
+  const priceOnRequest = rawPrice === PRICE_ON_REQUEST;
+  const priceKrw = rawPrice != null && !priceOnRequest ? rawPrice * 10_000 : null;
   const title = `${make} ${model}`;
 
   // Encar repeats photo paths within a listing, so dedupe by URL.
@@ -79,17 +84,40 @@ export default function CarDetail({
             {spec?.mileage != null && spec.mileage < 1000 && (
               <Badge className="bg-ink text-paper">Delivery mileage</Badge>
             )}
+            {underContract && (
+              <Badge className="bg-alert text-paper">Under contract</Badge>
+            )}
           </div>
 
-          <p className="numeric mt-6 font-display text-4xl font-extrabold text-brass">
-            {eur(toEur(priceKrw, rate))}
-          </p>
-          <p className="numeric mt-1 text-sm text-muted-foreground">
-            {krw(priceKrw)} in Korea
-          </p>
+          {underContract && (
+            <p className="mt-4 rounded-lg border border-border bg-mist/60 p-3 text-sm">
+              A buyer has already agreed terms on this car in Korea. Ask us and
+              we&apos;ll confirm whether it&apos;s still available, or find you
+              the same spec.
+            </p>
+          )}
+
+          {priceOnRequest ? (
+            <>
+              <p className="mt-6 font-display text-3xl font-bold">Price on request</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                The seller hasn&apos;t published a figure for this car. We&apos;ll
+                get it for you.
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="numeric mt-6 font-display text-4xl font-extrabold text-brass">
+                {eur(toEur(priceKrw, rate))}
+              </p>
+              <p className="numeric mt-1 text-sm text-muted-foreground">
+                {krw(priceKrw)} in Korea
+              </p>
+            </>
+          )}
           <p className="mt-3 text-xs text-muted-foreground">
-            Price before shipping, duty and registration. Ask us for the landed
-            total to {SITE.city}.
+            {!priceOnRequest && 'Price before shipping, duty and registration. '}
+            Ask us for the landed total to {SITE.city}.
             {!live && ' Conversion rate approximate.'}
             {live && rateUpdated ? ` Rate from ${rateUpdated}.` : ''}
           </p>
