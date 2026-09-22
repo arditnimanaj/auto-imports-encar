@@ -1,7 +1,7 @@
 import ClientVehicle from '@/components/ClientVehicle';
 import { getRate } from '@/lib/fx';
 
-export const metadata = { title: 'Car details' };
+export const metadata = { title: 'Detajet e veturës' };
 
 /** The car is fetched in the browser; see app/page.tsx for why. */
 export default async function CarPage({ params }: { params: Promise<{ id: string }> }) {

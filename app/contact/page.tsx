@@ -3,8 +3,8 @@ import ContactForm from '@/components/ContactForm';
 import { SITE } from '@/lib/site';
 
 export const metadata = {
-  title: 'Contact',
-  description: `Talk to ${SITE.name} about importing a car from Korea to Kosovo.`,
+  title: 'Kontakti',
+  description: `Flisni me ${SITE.name} për importin e një veture nga Koreja në Kosovë.`,
 };
 
 export default async function ContactPage({
@@ -17,11 +17,11 @@ export default async function ContactPage({
       <section className="bg-ink px-5 py-16 md:px-8">
         <div className="mx-auto max-w-7xl">
           <h1 className="font-display text-3xl font-extrabold text-paper md:text-5xl">
-            Tell us what you're looking for.
+            Na tregoni çfarë po kërkoni.
           </h1>
           <p className="mt-4 max-w-xl text-lg text-mist">
-            Send the model and your budget. We reply within one working day with
-            what's available and the full landed price to {SITE.city}.
+            Dërgoni modelin dhe buxhetin tuaj. Përgjigjemi brenda një dite pune
+            me atë që është në dispozicion dhe çmimin e plotë të dorëzuar në {SITE.city}.
           </p>
         </div>
       </section>
@@ -30,7 +30,7 @@ export default async function ContactPage({
         <ContactForm presetCar={car} />
 
         <aside className="lg:border-l lg:border-border lg:pl-10">
-          <h2 className="font-display text-lg font-bold">Reach us directly</h2>
+          <h2 className="font-display text-lg font-bold">Na kontaktoni drejtpërdrejt</h2>
           <ul className="mt-5 space-y-5 text-sm">
             <li className="flex gap-3">
               <Phone className="mt-0.5 h-4 w-4 shrink-0 text-brass" aria-hidden />
@@ -53,23 +53,23 @@ export default async function ContactPage({
             </li>
           </ul>
 
-          <h2 className="mt-10 font-display text-lg font-bold">How importing works</h2>
+          <h2 className="mt-10 font-display text-lg font-bold">Si funksionon importi</h2>
           <ol className="mt-4 space-y-4 text-sm text-muted-foreground">
             <li>
-              <span className="font-medium text-ink">You choose a car.</span> From
-              our stock, or tell us the spec and we search the Korean auctions.
+              <span className="font-medium text-ink">Ju zgjidhni një veturë.</span> Nga
+              stoku ynë, ose na tregoni specifikat dhe i kërkojmë në ankandet koreane.
             </li>
             <li>
-              <span className="font-medium text-ink">We quote the landed price.</span>{' '}
-              Car, sea freight, customs duty, VAT and registration — one number.
+              <span className="font-medium text-ink">Ju ofertojmë çmimin e dorëzuar.</span>{' '}
+              Vetura, transporti detar, dogana, TVSH-ja dhe regjistrimi — një shifër e vetme.
             </li>
             <li>
-              <span className="font-medium text-ink">Shipping.</span>{' '}
-              {SITE.route.join(' → ')}, roughly 6–8 weeks door to door.
+              <span className="font-medium text-ink">Transporti.</span>{' '}
+              {SITE.route.join(' → ')}, afërsisht 6–8 javë derë më derë.
             </li>
             <li>
-              <span className="font-medium text-ink">You collect the keys.</span>{' '}
-              Registered and road-legal in Kosovo.
+              <span className="font-medium text-ink">Ju i merrni çelësat.</span>{' '}
+              E regjistruar dhe e gatshme për rrugë në Kosovë.
             </li>
           </ol>
         </aside>

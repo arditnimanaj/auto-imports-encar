@@ -48,7 +48,7 @@ export default function Gallery({ photos, alt }: { photos: Photo[]; alt: string 
   if (!photos.length) {
     return (
       <p className="rounded-lg border border-dashed border-border py-12 text-center text-sm text-muted-foreground">
-        No photos for this car yet.
+        Ende nuk ka foto për këtë veturë.
       </p>
     );
   }
@@ -62,7 +62,7 @@ export default function Gallery({ photos, alt }: { photos: Photo[]; alt: string 
       <button
         onClick={() => setOpen(0)}
         className="relative block aspect-16/9 w-full overflow-hidden rounded-lg bg-mist"
-        aria-label={`Open photo 1 of ${photos.length}`}
+        aria-label={`Hap foton 1 nga ${photos.length}`}
       >
         <CarPhoto
           src={lead.full}
@@ -80,7 +80,7 @@ export default function Gallery({ photos, alt }: { photos: Photo[]; alt: string 
             key={p.src}
             onClick={() => setOpen(i + 1)}
             className="relative aspect-4/3 overflow-hidden rounded-lg bg-mist"
-            aria-label={`Open photo ${i + 2} of ${photos.length}`}
+            aria-label={`Hap foton ${i + 2} nga ${photos.length}`}
           >
             <CarPhoto
               src={p.src}
@@ -94,11 +94,11 @@ export default function Gallery({ photos, alt }: { photos: Photo[]; alt: string 
           <button
             onClick={() => setOpen(INITIAL)}
             className="grid aspect-4/3 place-items-center rounded-lg border border-border bg-mist/60 transition-colors hover:bg-mist"
-            aria-label={`Show the other ${hidden} photos`}
+            aria-label={`Shiko ${hidden} fotot e tjera`}
           >
             <span className="text-center">
               <span className="numeric block font-display text-xl font-bold">+{hidden}</span>
-              <span className="text-xs text-muted-foreground">more</span>
+              <span className="text-xs text-muted-foreground">më shumë</span>
             </span>
           </button>
         )}
@@ -109,7 +109,7 @@ export default function Gallery({ photos, alt }: { photos: Photo[]; alt: string 
           <motion.div
             role="dialog"
             aria-modal="true"
-            aria-label={`Photo ${open + 1} of ${photos.length}`}
+            aria-label={`Fotoja ${open + 1} nga ${photos.length}`}
             onClick={() => setOpen(null)}
             className="fixed inset-0 z-50 flex flex-col bg-ink"
             initial={reduced ? false : { opacity: 0 }}
@@ -118,10 +118,10 @@ export default function Gallery({ photos, alt }: { photos: Photo[]; alt: string 
             transition={{ duration: 0.18 }}
           >
             <div className="flex items-center justify-between px-4 py-3 text-mist">
-              <p className="numeric text-sm">{open + 1} of {photos.length}</p>
+              <p className="numeric text-sm">{open + 1} nga {photos.length}</p>
               <button
                 onClick={() => setOpen(null)}
-                aria-label="Close photos"
+                aria-label="Mbyll fotot"
                 className="grid h-10 w-10 place-items-center rounded-full bg-paper/10 transition-colors hover:bg-paper/20 hover:text-paper"
               >
                 <X className="h-5 w-5" />
@@ -140,7 +140,7 @@ export default function Gallery({ photos, alt }: { photos: Photo[]; alt: string 
               >
                 <CarPhoto
                   src={photos[open].full}
-                  alt={`${alt} — photo ${open + 1}`}
+                  alt={`${alt} — fotoja ${open + 1}`}
                   priority
                   className="absolute inset-0 h-full w-full object-contain"
                 />
@@ -159,7 +159,7 @@ export default function Gallery({ photos, alt }: { photos: Photo[]; alt: string 
                   key={p.src}
                   data-index={i}
                   onClick={() => setOpen(i)}
-                  aria-label={`Photo ${i + 1}`}
+                  aria-label={`Fotoja ${i + 1}`}
                   aria-current={i === open}
                   className={`relative h-16 w-24 shrink-0 overflow-hidden rounded transition-all ${
                     i === open
@@ -185,7 +185,7 @@ function Arrow({
   return (
     <button
       onClick={onClick}
-      aria-label={side === 'left' ? 'Previous photo' : 'Next photo'}
+      aria-label={side === 'left' ? 'Fotoja e mëparshme' : 'Fotoja tjetër'}
       className={`absolute z-10 grid h-11 w-11 place-items-center rounded-full bg-paper/10 text-mist transition-colors hover:bg-paper/20 hover:text-paper ${
         side === 'left' ? 'left-1 md:left-4' : 'right-1 md:right-4'
       }`}

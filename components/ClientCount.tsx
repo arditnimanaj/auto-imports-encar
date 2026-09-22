@@ -9,7 +9,7 @@ import { searchUrl, type Filters, type SearchResponse } from '@/lib/encar-shared
  * confident "0 cars" it cannot stand behind.
  */
 export default function ClientCount({
-  filters = {}, fallback = '—', format = (n: number) => n.toLocaleString('en-US'),
+  filters = {}, fallback = '—', format = (n: number) => n.toLocaleString('de-DE'),
 }: {
   filters?: Filters;
   fallback?: string;

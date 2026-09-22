@@ -6,7 +6,7 @@ import {
   imageUrl, normalize, searchUrl, type Car, type SearchResponse,
 } from '@/lib/encar-shared';
 import { eur, toEur } from '@/lib/format';
-import { makeEn, modelEn } from '@/lib/i18n';
+import { makeSq, modelSq } from '@/lib/i18n';
 
 /** The hero backdrop, drawn from a car actually in stock. */
 export default function ClientHero({ rate }: { rate: number }) {
@@ -48,7 +48,7 @@ export default function ClientHero({ rate }: { rate: number }) {
       )}
       {car && (
         <p className="relative mt-10 text-sm text-slate">
-          Pictured: {makeEn(car.make)} {modelEn(car.model)}
+          Në foto: {makeSq(car.make)} {modelSq(car.model)}
           {car.priceKrw ? ` — ${eur(toEur(car.priceKrw, rate))}` : ''}
         </p>
       )}

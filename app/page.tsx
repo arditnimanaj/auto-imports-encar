@@ -24,10 +24,10 @@ export default async function Home() {
       <RouteStrip />
 
       <Section
-        title="Nine cars, picked fresh"
-        note="A different selection each visit, weighted to the German marques."
+        title="Nëntë vetura, të zgjedhura rishtas"
+        note="Një përzgjedhje tjetër çdo vizitë, me theks te markat gjermane."
         href="/cars"
-        linkLabel="Browse all cars"
+        linkLabel="Shiko të gjitha veturat"
       >
         <ClientCars
           filters={{}}
@@ -39,10 +39,10 @@ export default async function Home() {
       </Section>
 
       <Section
-        title="Just landed"
-        note="The most recently listed cars in Korea, ready to quote."
+        title="Sapo mbërritën"
+        note="Veturat e listuara më së fundi në Kore, gati për ofertë."
         href="/cars?sort=newest"
-        linkLabel="See newest"
+        linkLabel="Shiko më të rejat"
       >
         <ClientCars
           filters={{}}
@@ -54,17 +54,17 @@ export default async function Home() {
       </Section>
 
       <Section
-        title="Browse by make"
-        note="Live counts — every number is stock we can quote today."
+        title="Shfleto sipas markës"
+        note="Numra të drejtpërdrejtë — çdo shifër është stok që mund ta ofertojmë sot."
       >
         <ClientMakes />
       </Section>
 
       <Section
-        title="Under €25,000"
-        note="Cars at the accessible end of the range, ready to quote."
+        title="Nën €25.000"
+        note="Vetura në pjesën më të arritshme të gamës, gati për ofertë."
         href="/cars?priceMax=4000&sort=priceAsc"
-        linkLabel="See all under €25,000"
+        linkLabel="Shiko të gjitha nën €25.000"
       >
         <ClientCars
           filters={{ priceMax: 4000 }}
@@ -86,17 +86,17 @@ function Hero({ rate }: { rate: number }) {
       <div className="relative px-5 py-20 md:px-8 md:py-28">
         <div className="relative">
           <h1 className="max-w-2xl font-display text-4xl leading-[1.05] font-extrabold text-paper md:text-6xl">
-            Korean stock, Kosovo plates.
+            Stok korean, targa kosovare.
           </h1>
           <p className="mt-5 max-w-lg text-lg text-mist">
-            We source cars from Korea&apos;s largest auction market — {YEAR_FLOOR_YEAR}{' '}
-            models and newer — and handle the shipping, customs and registration.
-            You collect the keys in {SITE.city}.
+            I sjellim veturat nga tregu më i madh i ankandeve në Kore — modele{' '}
+            {YEAR_FLOOR_YEAR} e tutje — dhe kujdesemi për transportin, doganën dhe
+            regjistrimin. Ju i merrni çelësat në {SITE.city}.
           </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Button size="lg" nativeButton={false} render={<Link href="/cars" />}>
-              See <ClientCount fallback="our" /> cars in stock
+              Shiko <ClientCount fallback="të gjitha" /> veturat në stok
             </Button>
             <Button
               size="lg"
@@ -105,7 +105,7 @@ function Hero({ rate }: { rate: number }) {
               nativeButton={false}
               render={<Link href="/contact" />}
             >
-              Ask for a quote
+              Kërko ofertë
             </Button>
           </div>
         </div>
@@ -120,9 +120,9 @@ function Hero({ rate }: { rate: number }) {
 
 function RouteStrip() {
   const facts: { value: React.ReactNode; label: string }[] = [
-    { value: <ClientCount />, label: 'cars in stock right now' },
-    { value: String(YEAR_FLOOR_YEAR), label: 'the oldest model year we list' },
-    { value: SITE.route.join(' → '), label: 'the route your car takes' },
+    { value: <ClientCount />, label: 'vetura në stok tani' },
+    { value: String(YEAR_FLOOR_YEAR), label: 'viti më i vjetër i modelit që listojmë' },
+    { value: SITE.route.join(' → '), label: 'rruga që bën vetura juaj' },
   ];
   return (
     <section className="border-b border-border bg-mist/60">
@@ -168,15 +168,15 @@ function ContactBand() {
       <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
         <div className="max-w-xl">
           <h2 className="font-display text-2xl font-bold text-paper md:text-3xl">
-            Looking for something not listed?
+            Po kërkoni diçka që nuk është e listuar?
           </h2>
           <p className="mt-2 text-mist">
-            Tell us the model and budget. We check the Korean auctions daily and
-            come back with options, landed price included.
+            Na tregoni modelin dhe buxhetin. I kontrollojmë ankandet koreane çdo
+            ditë dhe kthehemi me opsione, përfshirë çmimin e dorëzuar.
           </p>
         </div>
         <Button size="lg" nativeButton={false} render={<Link href="/contact" />}>
-          Tell us what you want
+          Na tregoni çfarë doni
         </Button>
       </div>
     </section>

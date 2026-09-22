@@ -1,5 +1,5 @@
 /**
- * Encar returns Korean labels. These maps render them in English for buyers
+ * Encar returns Korean labels. These maps render them in Albanian for buyers
  * here. Anything unmapped falls through unchanged rather than being dropped,
  * so a new make still shows up -- just in Korean until it's added.
  */
@@ -35,51 +35,51 @@ const MAKES: Record<string, string> = {
 };
 
 const FUELS: Record<string, string> = {
-  '가솔린': 'Petrol',
-  '디젤': 'Diesel',
-  '전기': 'Electric',
-  '가솔린+전기': 'Hybrid',
-  '디젤+전기': 'Diesel hybrid',
-  'LPG': 'LPG',
-  '가솔린+LPG': 'Petrol / LPG',
-  '수소': 'Hydrogen',
+  '가솔린': 'Benzinë',
+  '디젤': 'Naftë',
+  '전기': 'Elektrik',
+  '가솔린+전기': 'Hibrid',
+  '디젤+전기': 'Hibrid naftë',
+  'LPG': 'Gaz',
+  '가솔린+LPG': 'Benzinë / Gaz',
+  '수소': 'Hidrogjen',
 };
 
 const TRANSMISSIONS: Record<string, string> = {
-  '오토': 'Automatic',
+  '오토': 'Automatik',
   '수동': 'Manual',
   'CVT': 'CVT',
 };
 
 const COLORS: Record<string, string> = {
-  '흰색': 'White', '검정색': 'Black', '쥐색': 'Grey', '은색': 'Silver',
-  '회색': 'Grey', '파랑색': 'Blue', '빨간색': 'Red', '명은색': 'Bright silver',
-  '진주색': 'Pearl', '청색': 'Blue', '녹색': 'Green', '갈색': 'Brown',
+  '흰색': 'E bardhë', '검정색': 'E zezë', '쥐색': 'Gri', '은색': 'Argjend',
+  '회색': 'Gri', '파랑색': 'Blu', '빨간색': 'E kuqe', '명은색': 'Argjend i çelët',
+  '진주색': 'Perla', '청색': 'Blu', '녹색': 'Jeshile', '갈색': 'Kafe',
 };
 
 const BODIES: Record<string, string> = {
-  '세단': 'Saloon', 'SUV': 'SUV', '해치백': 'Hatchback', '쿠페': 'Coupe',
-  '왜건': 'Estate', '컨버터블': 'Convertible', '스포츠카': 'Sports car',
-  'RV': 'MPV', '승합': 'Van', '화물': 'Pickup', '리무진': 'Limousine',
-  '경차': 'City car', '소형차': 'Small car', '준중형차': 'Compact',
-  '중형차': 'Mid-size', '대형차': 'Full-size',
+  '세단': 'Limuzinë', 'SUV': 'SUV', '해치백': 'Hexhbek', '쿠페': 'Kupe',
+  '왜건': 'Familjar', '컨버터블': 'Kabriolet', '스포츠카': 'Sportive',
+  'RV': 'Minivan', '승합': 'Furgon', '화물': 'Pikap', '리무진': 'Limuzinë',
+  '경차': 'Veturë e vogël', '소형차': 'E vogël', '준중형차': 'Kompakte',
+  '중형차': 'Mesatare', '대형차': 'E madhe',
 };
 
 const pick = (map: Record<string, string>, v?: string | null) =>
   v ? (map[v] ?? v) : '';
 
-export const makeEn = (v?: string | null) => pick(MAKES, v);
-export const fuelEn = (v?: string | null) => pick(FUELS, v);
-export const transmissionEn = (v?: string | null) => pick(TRANSMISSIONS, v);
-export const colorEn = (v?: string | null) => pick(COLORS, v);
-export const bodyEn = (v?: string | null) => pick(BODIES, v);
+export const makeSq = (v?: string | null) => pick(MAKES, v);
+export const fuelSq = (v?: string | null) => pick(FUELS, v);
+export const transmissionSq = (v?: string | null) => pick(TRANSMISSIONS, v);
+export const colorSq = (v?: string | null) => pick(COLORS, v);
+export const bodySq = (v?: string | null) => pick(BODIES, v);
 
-/** Fuel options for the filter bar: English label, Korean API value. */
+/** Fuel options for the filter bar: Albanian label, Korean API value. */
 export const FUEL_OPTIONS = [
-  { label: 'Petrol', value: '가솔린' },
-  { label: 'Diesel', value: '디젤' },
-  { label: 'Electric', value: '전기' },
-  { label: 'Hybrid', value: '가솔린+전기' },
+  { label: 'Benzinë', value: '가솔린' },
+  { label: 'Naftë', value: '디젤' },
+  { label: 'Elektrik', value: '전기' },
+  { label: 'Hibrid', value: '가솔린+전기' },
 ] as const;
 
 /**
@@ -120,8 +120,12 @@ const TERMS: Record<string, string> = {
 
 const TERM_RE = new RegExp(Object.keys(TERMS).sort((a, b) => b.length - a.length).join('|'), 'g');
 
-/** Transliterate the Korean terms in a model or trim string. */
-export function modelEn(v?: string | null): string {
+/**
+ * Transliterate the Korean terms in a model or trim string. These stay in
+ * English on purpose: they are manufacturer trim names buyers recognise
+ * ("Gran Coupe", "Long Range"), not words to translate.
+ */
+export function modelSq(v?: string | null): string {
   if (!v) return '';
   return v
     .replace(TERM_RE, (m, offset: number, full: string) => {

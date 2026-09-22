@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { imageUrl, PRICE_ON_REQUEST, type VehicleDetail } from '@/lib/encar-shared';
 import { eur, km, krw, toEur, ym } from '@/lib/format';
-import { bodyEn, colorEn, fuelEn, makeEn, modelEn, transmissionEn } from '@/lib/i18n';
+import { bodySq, colorSq, fuelSq, makeSq, modelSq, transmissionSq } from '@/lib/i18n';
 import { SITE } from '@/lib/site';
 
 /**
@@ -24,9 +24,9 @@ export default function CarDetail({
   rateUpdated?: string | null;
 }) {
   const { category: cat, spec } = car;
-  const make = cat.manufacturerEnglishName || makeEn(cat.manufacturerName);
-  const model = cat.modelGroupEnglishName || modelEn(cat.modelName);
-  const trim = cat.gradeEnglishName || modelEn(cat.gradeName) || '';
+  const make = cat.manufacturerEnglishName || makeSq(cat.manufacturerName);
+  const model = cat.modelGroupEnglishName || modelSq(cat.modelName);
+  const trim = cat.gradeEnglishName || modelSq(cat.gradeName) || '';
   const year = Number(cat.yearMonth?.slice(0, 4));
   const month = Number(cat.yearMonth?.slice(4, 6));
   // Encar only sets salesStatus once a sale is agreed, so anything other than
@@ -49,14 +49,14 @@ export default function CarDetail({
   }
 
   const specs: [string, string][] = [
-    ['Registered', year && month ? ym(year, month) : '—'],
-    ['Mileage', km(spec?.mileage ?? null)],
-    ['Fuel', fuelEn(spec?.fuelName) || '—'],
-    ['Gearbox', transmissionEn(spec?.transmissionName) || '—'],
-    ['Engine', spec?.displacement ? `${spec.displacement.toLocaleString('en-US')} cc` : '—'],
-    ['Colour', colorEn(spec?.colorName) || '—'],
-    ['Body', bodyEn(spec?.bodyName) || '—'],
-    ['Seats', spec?.seatCount ? String(spec.seatCount) : '—'],
+    ['Regjistruar', year && month ? ym(year, month) : '—'],
+    ['Kilometrazhi', km(spec?.mileage ?? null)],
+    ['Karburanti', fuelSq(spec?.fuelName) || '—'],
+    ['Transmisioni', transmissionSq(spec?.transmissionName) || '—'],
+    ['Motori', spec?.displacement ? `${spec.displacement.toLocaleString('de-DE')} cc` : '—'],
+    ['Ngjyra', colorSq(spec?.colorName) || '—'],
+    ['Karroceria', bodySq(spec?.bodyName) || '—'],
+    ['Ulëse', spec?.seatCount ? String(spec.seatCount) : '—'],
   ];
 
   return (
@@ -66,7 +66,7 @@ export default function CarDetail({
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-ink"
       >
         <ArrowLeft className="h-4 w-4" />
-        All cars
+        Të gjitha veturat
       </Link>
 
       <div className="mt-6 grid gap-10 lg:grid-cols-[1fr_20rem]">
@@ -80,29 +80,29 @@ export default function CarDetail({
 
           <div className="mt-4 flex flex-wrap gap-2">
             <Badge variant="secondary">{year || '—'}</Badge>
-            {spec?.fuelName && <Badge variant="secondary">{fuelEn(spec.fuelName)}</Badge>}
+            {spec?.fuelName && <Badge variant="secondary">{fuelSq(spec.fuelName)}</Badge>}
             {spec?.mileage != null && spec.mileage < 1000 && (
-              <Badge className="bg-ink text-paper">Delivery mileage</Badge>
+              <Badge className="bg-ink text-paper">Kilometrazh dorëzimi</Badge>
             )}
             {underContract && (
-              <Badge className="bg-alert text-paper">Under contract</Badge>
+              <Badge className="bg-alert text-paper">Nën kontratë</Badge>
             )}
           </div>
 
           {underContract && (
             <p className="mt-4 rounded-lg border border-border bg-mist/60 p-3 text-sm">
-              A buyer has already agreed terms on this car in Korea. Ask us and
-              we&apos;ll confirm whether it&apos;s still available, or find you
-              the same spec.
+              Një blerës ka rënë dakord tashmë për këtë veturë në Kore. Na
+              pyetni dhe ju konfirmojmë nëse është ende e lirë, ose ju gjejmë
+              të njëjtat specifika.
             </p>
           )}
 
           {priceOnRequest ? (
             <>
-              <p className="mt-6 font-display text-3xl font-bold">Price on request</p>
+              <p className="mt-6 font-display text-3xl font-bold">Çmimi me kërkesë</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                The seller hasn&apos;t published a figure for this car. We&apos;ll
-                get it for you.
+                Shitësi nuk ka publikuar një shifër për këtë veturë. Ne e
+                sigurojmë për ju.
               </p>
             </>
           ) : (
@@ -111,16 +111,16 @@ export default function CarDetail({
                 {eur(toEur(priceKrw, rate))}
               </p>
               <p className="numeric mt-1 text-sm text-muted-foreground">
-                {krw(priceKrw)} in Korea
+                {krw(priceKrw)} në Kore
               </p>
             </>
           )}
           <p className="mt-3 text-xs text-muted-foreground">
-            {!priceOnRequest && 'Price before shipping, duty and registration. '}
-            Ask us for the landed total to {SITE.city}.
+            {!priceOnRequest && 'Çmimi para transportit, doganës dhe regjistrimit. '}
+            Na pyetni për totalin e dorëzuar në {SITE.city}.
             {/* The conversion note only means anything when there is a price. */}
-            {!priceOnRequest && !live && ' Conversion rate approximate.'}
-            {!priceOnRequest && live && rateUpdated ? ` Rate from ${rateUpdated}.` : ''}
+            {!priceOnRequest && !live && ' Kursi i këmbimit është i përafërt.'}
+            {!priceOnRequest && live && rateUpdated ? ` Kursi nga ${rateDate(rateUpdated)}.` : ''}
           </p>
 
           <div className="mt-6 flex flex-col gap-2">
@@ -129,7 +129,7 @@ export default function CarDetail({
               nativeButton={false}
               render={<Link href={`/contact?car=${encodeURIComponent(`${title} (${id})`)}`} />}
             >
-              Request this car
+              Kërko këtë veturë
             </Button>
             <Button
               variant="outline"
@@ -153,9 +153,25 @@ export default function CarDetail({
             ))}
           </dl>
 
-          <p className="mt-6 text-xs text-muted-foreground">Reference {id}</p>
+          <p className="mt-6 text-xs text-muted-foreground">Referenca {id}</p>
         </div>
       </div>
     </div>
   );
+}
+
+/**
+ * The FX API returns an English RFC-1123 date. Intl cannot help here: browser
+ * ICU has no Albanian month names (sq-AL falls back to English, sq-XK gives
+ * "M09"), so the names are spelled out.
+ */
+const MONTHS_SQ = [
+  'janar', 'shkurt', 'mars', 'prill', 'maj', 'qershor',
+  'korrik', 'gusht', 'shtator', 'tetor', 'nëntor', 'dhjetor',
+];
+
+function rateDate(v: string): string {
+  const d = new Date(v);
+  if (Number.isNaN(d.getTime())) return v;
+  return `${d.getDate()} ${MONTHS_SQ[d.getMonth()]} ${d.getFullYear()}`;
 }

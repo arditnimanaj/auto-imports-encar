@@ -43,13 +43,13 @@ export default function Header() {
           <a href={`tel:${SITE.phone.replace(/\s/g, '')}`} className="numeric text-sm text-mist">
             {SITE.phone}
           </a>
-          <Button size="sm" nativeButton={false} render={<Link href="/contact" />}>Get a quote</Button>
+          <Button size="sm" nativeButton={false} render={<Link href="/contact" />}>Merr ofertë</Button>
         </div>
 
         <button
           onClick={() => setOpen((v) => !v)}
           className="text-mist md:hidden"
-          aria-label={open ? 'Close menu' : 'Open menu'}
+          aria-label={open ? 'Mbyll menynë' : 'Hap menynë'}
           aria-expanded={open}
         >
           {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}

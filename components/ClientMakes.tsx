@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useFacets } from '@/lib/use-facets';
-import { makeEn } from '@/lib/i18n';
+import { makeSq } from '@/lib/i18n';
 import { Skeleton } from '@/components/ui/skeleton';
 
 /** Brand tiles with live counts, fetched in the browser. */
@@ -27,7 +27,7 @@ export default function ClientMakes({ limit = 12 }: { limit?: number }) {
           href={`/cars?make=${encodeURIComponent(m.name)}`}
           className="flex items-baseline justify-between rounded-lg border border-border px-4 py-3 transition-colors hover:border-brass hover:bg-mist/50"
         >
-          <span className="truncate font-medium">{makeEn(m.name)}</span>
+          <span className="truncate font-medium">{makeSq(m.name)}</span>
           <span className="numeric ml-2 shrink-0 text-sm text-muted-foreground">
             {m.count}
           </span>

@@ -76,17 +76,17 @@ export default function ClientVehicle({
   return (
     <div className="mx-auto max-w-lg px-5 py-24 text-center">
       <h1 className="font-display text-2xl font-bold">
-        {missing ? 'This car has been sold' : 'This car isn’t loading'}
+        {missing ? 'Kjo veturë është shitur' : 'Kjo veturë nuk po ngarkohet'}
       </h1>
       <p className="mt-3 text-muted-foreground">
         {missing
-          ? 'The listing is no longer on the market. We can source the same model — tell us what you need.'
-          : 'We couldn’t load this listing just now. Try again in a moment, or call us and we’ll check it for you.'}
+          ? 'Kjo shpallje nuk është më në treg. Mund ta sigurojmë të njëjtin model — na tregoni çfarë ju nevojitet.'
+          : 'Nuk arritëm ta ngarkojmë këtë shpallje për momentin. Provoni përsëri pas pak, ose na telefononi dhe e kontrollojmë për ju.'}
       </p>
       <div className="mt-7 flex justify-center gap-3">
-        <Button nativeButton={false} render={<Link href="/cars" />}>Browse stock</Button>
+        <Button nativeButton={false} render={<Link href="/cars" />}>Shfleto stokun</Button>
         <Button variant="outline" nativeButton={false} render={<Link href="/contact" />}>
-          Contact us
+          Na kontaktoni
         </Button>
       </div>
     </div>

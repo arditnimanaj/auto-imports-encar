@@ -14,7 +14,7 @@ export default function SiteFooter() {
         </div>
 
         <nav>
-          <p className="text-sm font-semibold text-paper">Pages</p>
+          <p className="text-sm font-semibold text-paper">Faqet</p>
           <ul className="mt-3 space-y-2">
             {NAV.map((item) => (
               <li key={item.href}>
@@ -27,7 +27,7 @@ export default function SiteFooter() {
         </nav>
 
         <address className="text-sm not-italic">
-          <p className="font-semibold text-paper">Visit or call</p>
+          <p className="font-semibold text-paper">Na vizitoni ose telefononi</p>
           <p className="mt-3 text-slate">{SITE.address}</p>
           <p className="mt-2">
             <a href={`tel:${SITE.phone.replace(/\s/g, '')}`} className="numeric text-mist hover:text-brass">
@@ -44,9 +44,9 @@ export default function SiteFooter() {
       </div>
 
       <p className="mx-auto mt-12 max-w-7xl border-t border-steel pt-6 text-xs text-slate">
-        Stock sourced live from Encar, Korea's largest used-car marketplace.
-        Prices convert from Korean won and exclude shipping, duty and
-        registration unless stated otherwise.
+        Stoku merret drejtpërdrejt nga Encar, tregu më i madh i veturave të
+        përdorura në Kore. Çmimet konvertohen nga woni korean dhe nuk përfshijnë
+        transportin, doganën dhe regjistrimin përveç nëse thuhet ndryshe.
       </p>
     </footer>
   );

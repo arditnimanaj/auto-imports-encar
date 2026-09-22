@@ -119,9 +119,9 @@ export default function ClientCars({
   if (state.status === 'error') {
     return (
       <div className="rounded-lg border border-dashed border-border py-16 text-center">
-        <p className="font-medium">Stock isn&apos;t loading right now.</p>
+        <p className="font-medium">Stoku nuk po ngarkohet për momentin.</p>
         <p className="mt-1 text-sm text-muted-foreground">
-          Refresh the page, or call us and we&apos;ll check availability for you.
+          Rifreskoni faqen, ose na telefononi dhe e kontrollojmë disponueshmërinë për ju.
         </p>
       </div>
     );
@@ -130,7 +130,7 @@ export default function ClientCars({
   if (!state.cars.length) {
     return (
       <p className="py-16 text-center text-muted-foreground">
-        No cars match those filters.
+        Asnjë veturë nuk përputhet me këta filtra.
       </p>
     );
   }
@@ -139,8 +139,8 @@ export default function ClientCars({
     <>
       {meta && count != null && (
         <p className="mb-6 -mt-2 text-sm text-muted-foreground">
-          {count.toLocaleString('en-US')} {count === 1 ? 'car' : 'cars'}
-          {query ? ` matching \u201c${query}\u201d within the first 200 results` : ''}
+          {count.toLocaleString('de-DE')} {count === 1 ? 'veturë' : 'vetura'}
+          {query ? ` që përputhen me \u201c${query}\u201d brenda 200 rezultateve të para` : ''}
         </p>
       )}
 
@@ -193,7 +193,7 @@ function Pager({
   };
 
   return (
-    <nav className="mt-10 flex items-center justify-center gap-3" aria-label="Pagination">
+    <nav className="mt-10 flex items-center justify-center gap-3" aria-label="Faqezimi">
       <Button
         variant="outline"
         size="sm"
@@ -201,10 +201,10 @@ function Pager({
         nativeButton={false}
         render={<Link href={href(Math.max(1, meta.page - 1))} />}
       >
-        Previous
+        E mëparshme
       </Button>
       <span className="numeric text-sm text-muted-foreground">
-        Page {meta.page} of {last.toLocaleString('en-US')}
+        Faqja {meta.page} nga {last.toLocaleString('de-DE')}
       </span>
       <Button
         variant="outline"
@@ -213,7 +213,7 @@ function Pager({
         nativeButton={false}
         render={<Link href={href(Math.min(last, meta.page + 1))} />}
       >
-        Next
+        Tjetra
       </Button>
     </nav>
   );

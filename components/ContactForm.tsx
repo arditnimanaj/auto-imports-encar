@@ -14,13 +14,13 @@ export default function ContactForm({ presetCar }: { presetCar?: string }) {
     return (
       <div className="rounded-lg border border-border bg-mist/50 p-8">
         <Check className="h-6 w-6 text-brass" aria-hidden />
-        <h2 className="mt-3 font-display text-xl font-bold">Request received</h2>
+        <h2 className="mt-3 font-display text-xl font-bold">Kërkesa u pranua</h2>
         <p className="mt-2 max-w-md text-sm text-muted-foreground">
-          We'll reply within one working day with availability and the landed
-          price. If it's urgent, call us instead.
+          Përgjigjemi brenda një dite pune me disponueshmërinë dhe çmimin e
+          dorëzuar. Nëse është urgjente, na telefononi.
         </p>
         <Button variant="outline" className="mt-6" onClick={() => setSent(false)}>
-          Send another request
+          Dërgo kërkesë tjetër
         </Button>
       </div>
     );
@@ -37,44 +37,44 @@ export default function ContactForm({ presetCar }: { presetCar?: string }) {
     >
       <div className="grid gap-5 sm:grid-cols-2">
         <div className="grid gap-2">
-          <Label htmlFor="name">Your name</Label>
+          <Label htmlFor="name">Emri juaj</Label>
           <Input id="name" name="name" required autoComplete="name" />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="phone">Phone</Label>
+          <Label htmlFor="phone">Telefoni</Label>
           <Input id="phone" name="phone" type="tel" required autoComplete="tel" />
         </div>
       </div>
 
       <div className="mt-5 grid gap-2">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email">Email-i</Label>
         <Input id="email" name="email" type="email" required autoComplete="email" />
       </div>
 
       <div className="mt-5 grid gap-2">
-        <Label htmlFor="car">Car you're after</Label>
+        <Label htmlFor="car">Vetura që kërkoni</Label>
         <Input
           id="car"
           name="car"
           defaultValue={presetCar ?? ''}
-          placeholder="BMW X5, or tell us the type you need"
+          placeholder="BMW X5, ose na tregoni llojin që ju nevojitet"
         />
       </div>
 
       <div className="mt-5 grid gap-2">
-        <Label htmlFor="budget">Budget in euro</Label>
+        <Label htmlFor="budget">Buxheti në euro</Label>
         <Input id="budget" name="budget" inputMode="numeric" placeholder="35000" />
       </div>
 
       <div className="mt-5 grid gap-2">
-        <Label htmlFor="message">Anything else</Label>
+        <Label htmlFor="message">Diçka tjetër</Label>
         <Textarea id="message" name="message" rows={5}
-          placeholder="Colour, trim, timing — whatever matters to you." />
+          placeholder="Ngjyra, pajisja, afati — çfarëdo që ka rëndësi për ju." />
       </div>
 
-      <Button type="submit" size="lg" className="mt-7">Send request</Button>
+      <Button type="submit" size="lg" className="mt-7">Dërgo kërkesën</Button>
       <p className="mt-3 text-xs text-muted-foreground">
-        We use your details only to answer this request.
+        Të dhënat tuaja i përdorim vetëm për t'iu përgjigjur kësaj kërkese.
       </p>
     </form>
   );

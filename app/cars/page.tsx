@@ -2,10 +2,10 @@ import { Suspense } from 'react';
 import ClientCars from '@/components/ClientCars';
 import SearchBar from '@/components/SearchBar';
 import { getRate } from '@/lib/fx';
-import { makeEn, modelEn } from '@/lib/i18n';
+import { makeSq, modelSq } from '@/lib/i18n';
 import { type SortKey, SORTS } from '@/lib/encar-shared';
 
-export const metadata = { title: 'Cars in stock' };
+export const metadata = { title: 'Veturat në stok' };
 
 const PAGE_SIZE = 24;
 
@@ -41,7 +41,7 @@ export default async function CarsPage({ searchParams }: { searchParams: Promise
       <div className="px-5 py-8 md:px-8">
         <header className="mb-6">
           <h1 className="font-display text-2xl font-bold md:text-3xl">
-            {make ? `${makeEn(make)}${model ? ` ${modelEn(model)}` : ''} in stock` : 'Cars in stock'}
+            {make ? `${makeSq(make)}${model ? ` ${modelSq(model)}` : ''} në stok` : 'Veturat në stok'}
           </h1>
         </header>
 

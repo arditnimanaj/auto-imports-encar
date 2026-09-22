@@ -9,26 +9,26 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { YEAR_FLOOR_YEAR } from '@/lib/encar-shared';
-import { FUEL_OPTIONS, makeEn, modelEn } from '@/lib/i18n';
+import { FUEL_OPTIONS, makeSq, modelSq } from '@/lib/i18n';
 import { useFacets } from '@/lib/use-facets';
 
 
 
 const SORTS = [
-  { value: 'newest', label: 'Newest first' },
-  { value: 'priceAsc', label: 'Price: low to high' },
-  { value: 'priceDesc', label: 'Price: high to low' },
-  { value: 'mileageAsc', label: 'Mileage: low to high' },
-  { value: 'mileageDesc', label: 'Mileage: high to low' },
+  { value: 'newest', label: 'Më të rejat në fillim' },
+  { value: 'priceAsc', label: 'Çmimi: i ulët te i lartë' },
+  { value: 'priceDesc', label: 'Çmimi: i lartë te i ulët' },
+  { value: 'mileageAsc', label: 'Kilometrazhi: i ulët te i lartë' },
+  { value: 'mileageDesc', label: 'Kilometrazhi: i lartë te i ulët' },
 ];
 
 /** Encar prices are in 만원 (10k KRW); labels show the rough euro equivalent. */
 const BUDGETS = [
-  { value: '2500', label: 'Up to €16,000' },
-  { value: '4000', label: 'Up to €25,000' },
-  { value: '6000', label: 'Up to €38,000' },
-  { value: '9000', label: 'Up to €57,000' },
-  { value: '15000', label: 'Up to €94,000' },
+  { value: '2500', label: 'Deri në €16.000' },
+  { value: '4000', label: 'Deri në €25.000' },
+  { value: '6000', label: 'Deri në €38.000' },
+  { value: '9000', label: 'Deri në €57.000' },
+  { value: '15000', label: 'Deri në €94.000' },
 ];
 
 const ANY = 'any';
@@ -83,21 +83,21 @@ export default function SearchBar() {
           <Input
             name="q"
             defaultValue={get('q')}
-            placeholder="Search model — X5, E-Class, Tucson"
-            aria-label="Search by model"
+            placeholder="Kërko model — X5, E-Class, Tucson"
+            aria-label="Kërko sipas modelit"
             className="pl-9"
           />
         </div>
 
         <Select value={get('make') || ANY} onValueChange={(v) => apply({ make: String(v ?? ""), model: "" })}>
-          <SelectTrigger className="w-40" aria-label="Make">
-            <SelectValue>{(v: string) => (v && v !== ANY ? makeEn(v) : "Any make")}</SelectValue>
+          <SelectTrigger className="w-40" aria-label="Marka">
+            <SelectValue>{(v: string) => (v && v !== ANY ? makeSq(v) : "Çdo markë")}</SelectValue>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={ANY}>Any make</SelectItem>
+            <SelectItem value={ANY}>Çdo markë</SelectItem>
             {makes.map((m) => (
               <SelectItem key={m.name} value={m.name}>
-                {makeEn(m.name)} ({m.count})
+                {makeSq(m.name)} ({m.count})
               </SelectItem>
             ))}
           </SelectContent>
@@ -108,30 +108,27 @@ export default function SearchBar() {
           onValueChange={(v) => apply({ model: String(v ?? '') })}
           disabled={!models.length}
         >
-          <SelectTrigger className="w-44" aria-label="Model">
+          <SelectTrigger className="w-44" aria-label="Modeli">
             <SelectValue>
-              {(v: string) =>
-                v && v !== ANY
-                  ? modelEn(v)
-                  : models.length ? 'Any model' : 'Any model'}
+              {(v: string) => (v && v !== ANY ? modelSq(v) : 'Çdo model')}
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={ANY}>Any model</SelectItem>
+            <SelectItem value={ANY}>Çdo model</SelectItem>
             {models.map((m) => (
               <SelectItem key={m.name} value={m.name}>
-                {modelEn(m.name)} ({m.count})
+                {modelSq(m.name)} ({m.count})
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
 
         <Select value={get('fuel') || ANY} onValueChange={(v) => apply({ fuel: String(v ?? "") })}>
-          <SelectTrigger className="w-32" aria-label="Fuel">
-            <SelectValue>{(v: string) => FUEL_OPTIONS.find((f) => f.value === v)?.label ?? "Any fuel"}</SelectValue>
+          <SelectTrigger className="w-32" aria-label="Karburanti">
+            <SelectValue>{(v: string) => FUEL_OPTIONS.find((f) => f.value === v)?.label ?? "Çdo karburant"}</SelectValue>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={ANY}>Any fuel</SelectItem>
+            <SelectItem value={ANY}>Çdo karburant</SelectItem>
             {FUEL_OPTIONS.map((f) => (
               <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
             ))}
@@ -139,25 +136,25 @@ export default function SearchBar() {
         </Select>
 
         <Select value={get('yearFrom') || ANY} onValueChange={(v) => apply({ yearFrom: String(v ?? '') })}>
-          <SelectTrigger className="w-36" aria-label="Year from">
+          <SelectTrigger className="w-36" aria-label="Viti nga">
             <SelectValue>
-              {(v: string) => (v && v !== ANY ? `${v} or newer` : 'Any year')}
+              {(v: string) => (v && v !== ANY ? `${v} e tutje` : 'Çdo vit')}
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={ANY}>Any year</SelectItem>
+            <SelectItem value={ANY}>Çdo vit</SelectItem>
             {YEARS.map((y) => (
-              <SelectItem key={y} value={String(y)}>{y} or newer</SelectItem>
+              <SelectItem key={y} value={String(y)}>{y} e tutje</SelectItem>
             ))}
           </SelectContent>
         </Select>
 
         <Select value={get('priceMax') || ANY} onValueChange={(v) => apply({ priceMax: String(v ?? "") })}>
-          <SelectTrigger className="w-40" aria-label="Budget">
-            <SelectValue>{(v: string) => BUDGETS.find((b) => b.value === v)?.label ?? "Any price"}</SelectValue>
+          <SelectTrigger className="w-40" aria-label="Buxheti">
+            <SelectValue>{(v: string) => BUDGETS.find((b) => b.value === v)?.label ?? "Çdo çmim"}</SelectValue>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={ANY}>Any price</SelectItem>
+            <SelectItem value={ANY}>Çdo çmim</SelectItem>
             {BUDGETS.map((b) => (
               <SelectItem key={b.value} value={b.value}>{b.label}</SelectItem>
             ))}
@@ -165,9 +162,9 @@ export default function SearchBar() {
         </Select>
 
         <Select value={get('sort') || 'newest'} onValueChange={(v) => apply({ sort: v === "newest" ? "" : String(v ?? "") })}>
-          <SelectTrigger className="w-44" aria-label="Sort">
+          <SelectTrigger className="w-44" aria-label="Renditja">
             <SelectValue>
-              {(v: string) => SORTS.find((o) => o.value === v)?.label ?? 'Newest first'}
+              {(v: string) => SORTS.find((o) => o.value === v)?.label ?? 'Më të rejat në fillim'}
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
@@ -178,7 +175,7 @@ export default function SearchBar() {
         </Select>
 
         <Button type="submit" disabled={pending}>
-          {pending ? 'Searching' : 'Search'}
+          {pending ? 'Duke kërkuar' : 'Kërko'}
         </Button>
 
         {active.length > 0 && (
@@ -189,7 +186,7 @@ export default function SearchBar() {
             onClick={() => start(() => router.push('/cars'))}
           >
             <X className="h-4 w-4" />
-            Clear {active.length}
+            Pastro {active.length}
           </Button>
         )}
       </form>

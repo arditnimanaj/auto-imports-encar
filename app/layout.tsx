@@ -19,12 +19,12 @@ const body = Manrope({
 export const metadata: Metadata = {
   title: { default: `${SITE.name} — ${SITE.tagline}`, template: `%s · ${SITE.name}` },
   description:
-    'Import cars from Korea to Kosovo — 2016 models and newer. Live stock, euro prices, shipping and customs handled door to door.',
+    'Importoni vetura nga Koreja në Kosovë — modele 2016 e tutje. Stok i drejtpërdrejtë, çmime në euro, transporti dhe dogana derë më derë.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${display.variable} ${body.variable}`}>
+    <html lang="sq" className={`${display.variable} ${body.variable}`}>
       <body className="min-h-screen">
         <Header />
         <main>{children}</main>
