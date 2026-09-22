@@ -199,7 +199,7 @@ function Pager({
         size="sm"
         disabled={meta.page <= 1}
         nativeButton={false}
-        render={<Link href={href(Math.max(1, meta.page - 1))} />}
+        render={<Link href={href(Math.max(1, meta.page - 1))} prefetch={false} />}
       >
         E mëparshme
       </Button>
@@ -211,7 +211,7 @@ function Pager({
         size="sm"
         disabled={meta.page >= last}
         nativeButton={false}
-        render={<Link href={href(Math.min(last, meta.page + 1))} />}
+        render={<Link href={href(Math.min(last, meta.page + 1))} prefetch={false} />}
       >
         Tjetra
       </Button>

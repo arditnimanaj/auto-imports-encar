@@ -18,7 +18,7 @@ export default function SiteFooter() {
           <ul className="mt-3 space-y-2">
             {NAV.map((item) => (
               <li key={item.href}>
-                <Link href={item.href} className="text-sm text-slate hover:text-mist">
+                <Link href={item.href} prefetch={false} className="text-sm text-slate hover:text-mist">
                   {item.label}
                 </Link>
               </li>
