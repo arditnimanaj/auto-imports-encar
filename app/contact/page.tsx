@@ -1,6 +1,6 @@
-import { Mail, MapPin, Phone } from 'lucide-react';
+import { Mail, MapPin, MessageCircle, Phone } from 'lucide-react';
 import ContactForm from '@/components/ContactForm';
-import { SITE } from '@/lib/site';
+import { MESSAGING, SITE, STEPS } from '@/lib/site';
 
 export const metadata = {
   title: 'Kontakti',
@@ -35,11 +35,19 @@ export default async function ContactPage({
             <li className="flex gap-3">
               <Phone className="mt-0.5 h-4 w-4 shrink-0 text-brass" aria-hidden />
               <div>
-                <a href={`tel:${SITE.phone.replace(/\s/g, '')}`} className="numeric font-medium hover:text-brass">
+                <a href={MESSAGING.tel} className="numeric font-medium hover:text-brass">
                   {SITE.phone}
                 </a>
                 <p className="mt-0.5 text-muted-foreground">{SITE.hours}</p>
               </div>
+            </li>
+            <li className="flex gap-3">
+              <MessageCircle className="mt-0.5 h-4 w-4 shrink-0 text-brass" aria-hidden />
+              <p className="font-medium">
+                <a href={MESSAGING.whatsapp()} target="_blank" rel="noopener" className="hover:text-brass">WhatsApp</a>
+                <span className="mx-2 text-muted-foreground">·</span>
+                <a href={MESSAGING.viber} className="hover:text-brass">Viber</a>
+              </p>
             </li>
             <li className="flex gap-3">
               <Mail className="mt-0.5 h-4 w-4 shrink-0 text-brass" aria-hidden />
@@ -55,22 +63,11 @@ export default async function ContactPage({
 
           <h2 className="mt-10 font-display text-lg font-bold">Si funksionon importi</h2>
           <ol className="mt-4 space-y-4 text-sm text-muted-foreground">
-            <li>
-              <span className="font-medium text-ink">Ju zgjidhni një veturë.</span> Nga
-              stoku ynë, ose na tregoni specifikat dhe i kërkojmë në ankandet koreane.
-            </li>
-            <li>
-              <span className="font-medium text-ink">Ju ofertojmë çmimin e dorëzuar.</span>{' '}
-              Vetura, transporti detar, dogana, TVSH-ja dhe regjistrimi — një shifër e vetme.
-            </li>
-            <li>
-              <span className="font-medium text-ink">Transporti.</span>{' '}
-              {SITE.route.join(' → ')}, afërsisht 6–8 javë derë më derë.
-            </li>
-            <li>
-              <span className="font-medium text-ink">Ju i merrni çelësat.</span>{' '}
-              E regjistruar dhe e gatshme për rrugë në Kosovë.
-            </li>
+            {STEPS.map((step) => (
+              <li key={step.title}>
+                <span className="font-medium text-ink">{step.title}</span> {step.body}
+              </li>
+            ))}
           </ol>
         </aside>
       </div>

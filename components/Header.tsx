@@ -31,7 +31,7 @@ export default function Header() {
                 href={item.href}
                 prefetch={false}
                 className={`rounded px-3 py-2 text-sm font-medium transition-colors ${
-                  active ? 'text-paper' : 'text-slate hover:text-mist'
+                  active ? 'text-paper' : 'text-mist/70 hover:text-paper'
                 }`}
               >
                 {item.label}

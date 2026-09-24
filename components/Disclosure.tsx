@@ -6,10 +6,10 @@ import { ChevronDown } from 'lucide-react';
  * so it needs no script and opens with find-in-page.
  */
 export default function Disclosure({
-  title, summary, children,
-}: { title: string; summary: React.ReactNode; children: React.ReactNode }) {
+  id, title, summary, children,
+}: { id?: string; title: string; summary: React.ReactNode; children: React.ReactNode }) {
   return (
-    <details className="group rounded-lg border border-border open:pb-1">
+    <details id={id} className="group scroll-mt-40 rounded-lg border border-border open:pb-1">
       <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-lg px-5 py-4 transition-colors hover:bg-mist/40 [&::-webkit-details-marker]:hidden">
         <span className="min-w-0">
           <span className="block font-display text-lg font-bold">{title}</span>

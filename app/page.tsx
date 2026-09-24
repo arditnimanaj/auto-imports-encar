@@ -7,7 +7,7 @@ import Reveal from '@/components/Reveal';
 import { Button } from '@/components/ui/button';
 import { getRate } from '@/lib/fx';
 import { YEAR_FLOOR_YEAR } from '@/lib/encar-shared';
-import { SITE } from '@/lib/site';
+import { SITE, STEPS } from '@/lib/site';
 
 /**
  * No stock is fetched on the server. Encar throttles datacenter egress hard
@@ -61,19 +61,13 @@ export default async function Home() {
       </Section>
 
       <Section
-        title="Nën €25.000"
-        note="Vetura në pjesën më të arritshme të gamës, gati për ofertë."
-        href="/cars?priceMax=4000&sort=priceAsc"
-        linkLabel="Shiko të gjitha nën €25.000"
+        title="Sipas buxhetit"
+        note="Çmimi i veturës në Kore. Dogana shtohet sipas vitit dhe motorit."
       >
-        <ClientCars
-          filters={{ priceMax: 4000 }}
-          limit={6}
-          sort="priceAsc"
-          rate={rate.krwToEur}
-          className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3"
-        />
+        <Budgets rate={rate.krwToEur} />
       </Section>
+
+      <Faq />
 
       <ContactBand />
     </>
@@ -108,6 +102,16 @@ function Hero({ rate }: { rate: number }) {
               Kërko ofertë
             </Button>
           </div>
+
+          <ol className="mt-12 grid max-w-3xl gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">
+            {STEPS.map((step, i) => (
+              <li key={step.title} className="border-t border-steel pt-3">
+                <p className="numeric font-display text-sm font-bold text-brass">0{i + 1}</p>
+                <p className="mt-1 text-sm font-semibold text-paper">{step.title}</p>
+                <p className="mt-1 text-xs leading-relaxed text-mist/70">{step.body}</p>
+              </li>
+            ))}
+          </ol>
         </div>
 
         {/* Renders the backdrop (absolutely positioned) plus the caption, which
@@ -178,6 +182,87 @@ function ContactBand() {
         <Button size="lg" nativeButton={false} render={<Link href="/contact" />}>
           Na tregoni çfarë doni
         </Button>
+      </div>
+    </section>
+  );
+}
+
+/**
+ * Price bands a buyer here thinks in, as links into /cars with live counts.
+ * Encar filters in 만원 (10k KRW), so the euro edges are converted at today's
+ * rate.
+ */
+const BANDS: { label: string; min?: number; max?: number }[] = [
+  { label: 'Nën €15.000', max: 15_000 },
+  { label: '€15.000 – €25.000', min: 15_000, max: 25_000 },
+  { label: '€25.000 – €40.000', min: 25_000, max: 40_000 },
+  { label: 'Mbi €40.000', min: 40_000 },
+];
+
+function Budgets({ rate }: { rate: number }) {
+  const man = (eur?: number) => (eur == null ? undefined : Math.round(eur / rate / 10_000));
+  return (
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      {BANDS.map((b) => {
+        const priceMin = man(b.min);
+        const priceMax = man(b.max);
+        const q = new URLSearchParams();
+        if (priceMin != null) q.set('priceMin', String(priceMin));
+        if (priceMax != null) q.set('priceMax', String(priceMax));
+        return (
+          <Link
+            key={b.label}
+            href={`/cars?${q}`}
+            className="group rounded-lg border border-border p-5 transition-colors hover:border-brass hover:bg-mist/50"
+          >
+            <p className="numeric font-display text-lg font-bold">{b.label}</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              <ClientCount filters={{ priceMin, priceMax }} fallback="…" /> vetura
+            </p>
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
+
+const FAQ: { q: string; a: string }[] = [
+  {
+    q: 'Sa zgjat derisa vetura të arrijë në Kosovë?',
+    a: `Afërsisht ${SITE.deliveryWeeks} javë derë më derë: ${SITE.route.join(' → ')}.`,
+  },
+  {
+    q: 'Çka përfshin çmimi që shoh në faqe?',
+    a: 'Çmimi i madh është çmimi i veturës në Kore, i konvertuar në euro dhe i rrumbullakuar lart në 100 €. "Me doganë" shton akcizën, tatimin në import (10%) dhe TVSH-në (18%) si vlerësim. Transportin dhe regjistrimin i përfshijmë në ofertën tonë të plotë.',
+  },
+  {
+    q: 'Si e di nëse vetura ka pasur aksident?',
+    a: 'Çdo veturë ka historinë koreane të sigurimit dhe raportin zyrtar të kontrollit teknik — dëmet e paguara, panelet e riparuara dhe gjendjen e shasisë. Në kërkim mund të filtroni vetëm veturat pa dëmtim strukture.',
+  },
+  {
+    q: 'Po sikur vetura të shitet para se ta porosis?',
+    a: 'Stoku vjen drejtpërdrejt nga Koreja dhe ndryshon çdo ditë. Nëse vetura shitet, ju gjejmë një tjetër me të njëjtat specifika.',
+  },
+  {
+    q: 'A mund të kërkoj një veturë që nuk është në listë?',
+    a: 'Po. Na tregoni modelin dhe buxhetin, dhe i kontrollojmë ankandet koreane çdo ditë për ju.',
+  },
+];
+
+function Faq() {
+  return (
+    <section id="pyetje" className="scroll-mt-24 px-5 pt-16 md:px-8">
+      <h2 className="font-display text-2xl font-bold md:text-3xl">Pyetje të shpeshta</h2>
+      <div className="mt-6 max-w-3xl divide-y divide-border border-y border-border">
+        {FAQ.map((f) => (
+          <details key={f.q} className="group">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-4 font-medium [&::-webkit-details-marker]:hidden">
+              {f.q}
+              <span className="text-xl leading-none text-slate transition-transform group-open:rotate-45" aria-hidden>+</span>
+            </summary>
+            <p className="pb-5 text-sm leading-relaxed text-muted-foreground">{f.a}</p>
+          </details>
+        ))}
       </div>
     </section>
   );

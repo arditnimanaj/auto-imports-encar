@@ -1,7 +1,8 @@
 import { queryOptions } from '@tanstack/react-query';
 import {
-  buildFeaturedQuery, buildQuery, extractFacets, metaUrl, normalize, searchUrl, searchUrlFor,
-  type Car, type Filters, type SearchResponse, type SortKey,
+  buildFeaturedQuery, buildQuery, extractFacets, inspectionUrl, metaUrl, normalize,
+  recordUrl, searchUrl, searchUrlFor,
+  type Car, type CarRecord, type Filters, type Inspection, type SearchResponse, type SortKey,
 } from './encar-shared';
 
 /** Query key and lifetime for the homepage sample, which is persisted. */
@@ -118,4 +119,33 @@ async function pickFeatured(latest: Promise<Page>): Promise<Page> {
     .sort(() => Math.random() - 0.5)
     .slice(0, 9);
   return { cars, count: cars.length };
+}
+
+/** Both endpoints answer 200 with an empty body when a listing has no report. */
+async function getJson<T>(url: string, valid: (d: T) => boolean): Promise<T | null> {
+  const res = await fetch(url);
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(String(res.status));
+  const text = await res.text();
+  if (!text.trim()) return null;
+  const data = JSON.parse(text) as T;
+  return data && valid(data) ? data : null;
+}
+
+/**
+ * Insurance history. Shared by the card badges, the verdict beside the price
+ * and the full section, so a car costs one request however many show it.
+ */
+export function recordQuery(id: string) {
+  return queryOptions({
+    queryKey: ['record', id],
+    queryFn: () => getJson<CarRecord>(recordUrl(id), (d) => typeof d.myAccidentCnt === 'number'),
+  });
+}
+
+export function inspectionQuery(id: string) {
+  return queryOptions({
+    queryKey: ['inspection', id],
+    queryFn: () => getJson<Inspection>(inspectionUrl(id), (d) => Boolean(d.master)),
+  });
 }

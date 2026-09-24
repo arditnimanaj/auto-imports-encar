@@ -97,7 +97,7 @@ export default function Gallery({ photos, alt }: { photos: Photo[]; alt: string 
     <>
       <button
         onClick={() => setOpen(0)}
-        className="relative block aspect-16/9 w-full overflow-hidden rounded-lg bg-mist"
+        className="relative -mx-5 block aspect-16/9 w-[calc(100%+2.5rem)] overflow-hidden bg-mist sm:mx-0 sm:w-full sm:rounded-lg"
         aria-label={`Hap foton 1 nga ${photos.length}`}
       >
         <CarPhoto

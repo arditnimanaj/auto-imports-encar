@@ -4,6 +4,8 @@ import type { Car } from "@/lib/encar-shared";
 import { carEur, eur, km, ym } from "@/lib/format";
 import { fuelSq, makeSq, modelSq } from "@/lib/i18n";
 import { Badge } from "@/components/ui/badge";
+import CardTrust from "@/components/CardTrust";
+import { landedEstimate } from "@/lib/customs";
 
 export default function CarCard({
   car,
@@ -14,6 +16,11 @@ export default function CarCard({
   rate: number;
   priority?: boolean;
 }) {
+  const price = carEur(car.priceKrw, rate);
+  // Search results carry no engine size, so this uses the smallest excise band
+  // and reads "from"; the car page has the exact figure.
+  const landed = price ? landedEstimate(price, car.year).total : null;
+
   return (
     <Link
       href={`/car/${car.id}`}
@@ -31,9 +38,10 @@ export default function CarCard({
         )}
         {car.mileageKm != null && car.mileageKm < 1000 && (
           <Badge className="absolute top-3 left-3 bg-ink text-paper">
-            Kilometrazh dorëzimi
+            Pothuajse e re
           </Badge>
         )}
+        <CardTrust id={car.id} />
       </div>
 
       <div className="p-4">
@@ -49,9 +57,16 @@ export default function CarCard({
             Çmimi me kërkesë
           </p>
         ) : (
-          <p className="numeric mt-3 font-display text-xl font-bold text-brass">
-            {eur(carEur(car.priceKrw, rate))}
-          </p>
+          <div className="mt-3">
+            <p className="numeric font-display text-xl font-bold text-brass">
+              {eur(price)}
+            </p>
+            {landed != null && (
+              <p className="numeric mt-0.5 text-xs text-muted-foreground">
+                Me doganë nga {eur(landed)}
+              </p>
+            )}
+          </div>
         )}
 
         <dl className="mt-3 grid grid-cols-3 gap-2 border-t border-border pt-3 text-xs">

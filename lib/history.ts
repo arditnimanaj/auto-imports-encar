@@ -1,7 +1,8 @@
 // Albanian labels for Encar's insurance history and inspection report. As in
 // lib/i18n, anything unmapped falls through in Korean rather than vanishing.
 
-import type { Inspection, InspectionItem } from './encar-shared';
+import type { CarRecord, Inspection, InspectionItem } from './encar-shared';
+import { eur, toEur } from './format';
 
 export const CLAIM_TYPES: Record<string, string> = {
   '1': 'Dëm i veturës (siguracioni i vet)',
@@ -108,4 +109,50 @@ export function systemResults(insp: Inspection): SystemResult[] {
       findings: [...new Set(findings)],
     };
   });
+}
+
+/** Yes/no questions a buyer asks of the insurance history. */
+export const RECORD_CHECKS: [string, (r: CarRecord) => boolean][] = [
+  ['Humbje totale', (r) => r.totalLossCnt > 0],
+  ['Përmbytje', (r) => r.floodTotalLossCnt + (r.floodPartLossCnt ?? 0) > 0],
+  ['Vjedhje', (r) => r.robberCnt > 0],
+  ['Taksi / komerciale', (r) => r.business > 0],
+  ['Me qira', (r) => r.loan > 0],
+  ['Institucion shtetëror', (r) => r.government > 0],
+];
+
+export type Summary = { ok: boolean; text: string };
+
+/** One line for the insurance history, e.g. "2 dëme · €4.100 · 1 ndërrim pronari". */
+export function recordSummary(r: CarRecord, rate: number): Summary {
+  const flagged = RECORD_CHECKS.filter(([, hit]) => hit(r)).map(([label]) => label);
+  return {
+    ok: !r.myAccidentCnt && !flagged.length,
+    text: [
+      r.myAccidentCnt
+        ? `${r.myAccidentCnt} ${r.myAccidentCnt === 1 ? 'dëm' : 'dëme'} · ${eur(toEur(r.myAccidentCost, rate))}`
+        : 'Pa dëme të veturës',
+      ...flagged,
+      `${r.ownerChangeCnt} ${r.ownerChangeCnt === 1 ? 'ndërrim' : 'ndërrime'} pronari`,
+    ].join(' · '),
+  };
+}
+
+/** One line for the inspection, e.g. "Pa dëmtim strukture · 2 panele të riparuara". */
+export function inspectionSummary(insp: Inspection): Summary {
+  const panels = insp.outers?.length ?? 0;
+  const mechanical = insp.master.detail
+    ? systemResults(insp).filter((s) => s.findings.length).length
+    : 0;
+  const body = panels
+    ? `${panels} ${panels === 1 ? 'panel i riparuar' : 'panele të riparuara'}`
+    : insp.master.simpleRepair ? 'Panele të riparuara' : 'Panelet origjinale';
+  return {
+    ok: !insp.master.accdient && !insp.master.simpleRepair && !panels && !mechanical,
+    text: [
+      insp.master.accdient ? 'Dëmtim i strukturës' : 'Pa dëmtim strukture',
+      body,
+      mechanical ? `${mechanical} vërejtje mekanike` : null,
+    ].filter(Boolean).join(' · '),
+  };
 }

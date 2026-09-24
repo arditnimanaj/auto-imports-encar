@@ -5,38 +5,21 @@ import { useQuery } from '@tanstack/react-query';
 import { Check, TriangleAlert, X } from 'lucide-react';
 import Disclosure from '@/components/Disclosure';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  inspectionUrl, recordUrl, type CarRecord, type Inspection,
-} from '@/lib/encar-shared';
+import type { CarRecord, Inspection } from '@/lib/encar-shared';
 import { eur, km, toEur } from '@/lib/format';
 import {
-  CLAIM_TYPES, PANEL_STATUS, panelSq, splitPanel, systemResults, type Side,
+  CLAIM_TYPES, inspectionSummary, PANEL_STATUS, panelSq, RECORD_CHECKS, recordSummary,
+  splitPanel, systemResults, type Side,
 } from '@/lib/history';
-
-/** Both endpoints answer 200 with an empty body when a listing has no report. */
-async function getJson<T>(url: string, valid: (d: T) => boolean): Promise<T | null> {
-  const res = await fetch(url);
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error(String(res.status));
-  const text = await res.text();
-  if (!text.trim()) return null;
-  const data = JSON.parse(text) as T;
-  return data && valid(data) ? data : null;
-}
+import { inspectionQuery, recordQuery } from '@/lib/query';
 
 /**
  * The car's Korean insurance history and its statutory inspection report,
  * the two things a buyer abroad cannot check for themselves.
  */
 export default function CarHistory({ id, rate }: { id: string; rate: number }) {
-  const record = useQuery({
-    queryKey: ['record', id],
-    queryFn: () => getJson<CarRecord>(recordUrl(id), (d) => typeof d.myAccidentCnt === 'number'),
-  });
-  const inspection = useQuery({
-    queryKey: ['inspection', id],
-    queryFn: () => getJson<Inspection>(inspectionUrl(id), (d) => Boolean(d.master)),
-  });
+  const record = useQuery(recordQuery(id));
+  const inspection = useQuery(inspectionQuery(id));
 
   if (record.isPending && inspection.isPending) {
     return (
@@ -63,29 +46,15 @@ function History({ r, rate }: { r: CarRecord; rate: number }) {
   const [all, setAll] = useState(false);
   const claims = [...(r.accidents ?? [])].sort((a, b) => b.date.localeCompare(a.date));
   const shown = all ? claims : claims.slice(0, 4);
-  const flood = r.floodTotalLossCnt + (r.floodPartLossCnt ?? 0);
-
-  const checks: [string, boolean][] = [
-    ['Humbje totale', r.totalLossCnt > 0],
-    ['Përmbytje', flood > 0],
-    ['Vjedhje', r.robberCnt > 0],
-    ['Taksi / komerciale', r.business > 0],
-    ['Me qira', r.loan > 0],
-    ['Institucion shtetëror', r.government > 0],
-  ];
-
-  const flagged = checks.filter(([, hit]) => hit).map(([label]) => label);
-  const clean = !r.myAccidentCnt && !flagged.length;
-  const summary = [
-    r.myAccidentCnt
-      ? `${r.myAccidentCnt} ${r.myAccidentCnt === 1 ? 'dëm' : 'dëme'} · ${eur(toEur(r.myAccidentCost, rate))}`
-      : 'Pa dëme të veturës',
-    ...flagged,
-    `${r.ownerChangeCnt} ${r.ownerChangeCnt === 1 ? 'ndërrim' : 'ndërrime'} pronari`,
-  ].join(' · ');
+  const checks = RECORD_CHECKS.map(([label, hit]) => [label, hit(r)] as const);
+  const summary = recordSummary(r, rate);
 
   return (
-    <Disclosure title="Historia e sigurimit" summary={<Verdict ok={clean}>{summary}</Verdict>}>
+    <Disclosure
+      id="historia"
+      title="Historia e sigurimit"
+      summary={<Verdict ok={summary.ok}>{summary.text}</Verdict>}
+    >
       <p className="mb-4 text-xs text-muted-foreground">
         Nga regjistri korean i siguracioneve (KIDI), përmes Encar.
       </p>
@@ -181,19 +150,14 @@ function Condition({ insp }: { insp: Inspection }) {
     d?.mileage != null && `në ${km(d.mileage)}`,
   ].filter(Boolean).join(' ');
 
-  const mechanical = systems.filter((s) => s.findings.length).length;
-  const bodyNote = panels.length
-    ? `${panels.length} ${panels.length === 1 ? 'panel i riparuar' : 'panele të riparuara'}`
-    : insp.master.simpleRepair ? 'Panele të riparuara' : 'Panelet origjinale';
-  const summary = [
-    insp.master.accdient ? 'Dëmtim i strukturës' : 'Pa dëmtim strukture',
-    bodyNote,
-    mechanical ? `${mechanical} vërejtje mekanike` : null,
-  ].filter(Boolean).join(' · ');
-  const clean = !insp.master.accdient && !insp.master.simpleRepair && !panels.length && !mechanical;
+  const summary = inspectionSummary(insp);
 
   return (
-    <Disclosure title="Kontrolli teknik" summary={<Verdict ok={clean}>{summary}</Verdict>}>
+    <Disclosure
+      id="kontrolli"
+      title="Kontrolli teknik"
+      summary={<Verdict ok={summary.ok}>{summary.text}</Verdict>}
+    >
       <p className="mb-4 text-xs text-muted-foreground">
         Raporti zyrtar i gjendjes në Kore{meta ? ` · ${meta}` : ''}.
       </p>
@@ -330,7 +294,7 @@ function BodyDiagram({ panels }: { panels: { title: string; tone: Tone }[] }) {
 
 /* ------------------------------------------------------------------ */
 
-function Verdict({ ok, children }: { ok: boolean; children: React.ReactNode }) {
+export function Verdict({ ok, children }: { ok: boolean; children: React.ReactNode }) {
   return (
     <span className="flex items-start gap-1.5">
       {ok

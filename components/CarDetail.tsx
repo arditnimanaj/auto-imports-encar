@@ -1,16 +1,18 @@
 import Link from 'next/link';
-import { ArrowLeft, Phone } from 'lucide-react';
+import { ArrowLeft, MessageCircle, Phone } from 'lucide-react';
 import CarEquipment from '@/components/CarEquipment';
 import CarHistory from '@/components/CarHistory';
+import CarVerdicts from '@/components/CarVerdicts';
 import Gallery, { type Photo } from '@/components/Gallery';
 import PriceCard from '@/components/PriceCard';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { imageUrl, PRICE_ON_REQUEST, type VehicleDetail } from '@/lib/encar-shared';
-import { carEur, km, ym } from '@/lib/format';
+import { landedEstimate } from '@/lib/customs';
+import { carEur, eur, km, ym } from '@/lib/format';
 import { bodySq, colorSq, fuelSq, makeSq, modelSq, transmissionSq } from '@/lib/i18n';
-import { SITE } from '@/lib/site';
+import { MESSAGING, SITE } from '@/lib/site';
 
 /**
  * Rendered either from the server or, where Encar refused the server, from
@@ -38,6 +40,7 @@ export default function CarDetail({
   const priceKrw = rawPrice != null && !priceOnRequest ? rawPrice * 10_000 : null;
   const priceEur = carEur(priceKrw, rate);
   const title = `${make} ${model}`;
+  const message = `Përshëndetje, jam i interesuar për ${title}${year ? ` ${year}` : ''} (referenca ${id}).`;
 
   // Encar repeats photo paths within a listing, so dedupe by URL.
   const photos: Photo[] = [];
@@ -71,16 +74,15 @@ export default function CarDetail({
         Të gjitha veturat
       </Link>
 
-      <div className="mt-6 grid gap-10 lg:grid-cols-[1fr_20rem]">
-        <div className="min-w-0">
+      {/* Source order is gallery, details, reports, so a phone reads the price
+          before the reports; on large screens the details become a sticky
+          right column spanning both rows. */}
+      <div className="mt-6 grid gap-x-10 gap-y-8 lg:grid-cols-[1fr_20rem]">
+        <div className="min-w-0 lg:col-start-1 lg:row-start-1">
           <Gallery photos={photos} alt={title} />
-          <div className="mt-10 space-y-3">
-            <CarEquipment codes={car.options?.standard} />
-            <CarHistory id={id} rate={rate} />
-          </div>
         </div>
 
-        <div className="lg:sticky lg:top-24 lg:self-start">
+        <div className="lg:sticky lg:top-24 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:self-start">
           <h1 className="font-display text-2xl font-bold">{title}</h1>
           {trim && <p className="mt-1 text-muted-foreground">{trim}</p>}
 
@@ -88,7 +90,7 @@ export default function CarDetail({
             <Badge variant="secondary">{year || '—'}</Badge>
             {spec?.fuelName && <Badge variant="secondary">{fuelSq(spec.fuelName)}</Badge>}
             {spec?.mileage != null && spec.mileage < 1000 && (
-              <Badge className="bg-ink text-paper">Kilometrazh dorëzimi</Badge>
+              <Badge className="bg-ink text-paper">Pothuajse e re</Badge>
             )}
             {underContract && (
               <Badge className="bg-alert text-paper">Nën kontratë</Badge>
@@ -115,6 +117,8 @@ export default function CarDetail({
             <PriceCard price={priceEur} year={year} displacement={spec?.displacement} />
           )}
 
+          <CarVerdicts id={id} rate={rate} />
+
           <div className="mt-6 flex flex-col gap-2">
             <Button
               size="lg"
@@ -123,11 +127,31 @@ export default function CarDetail({
             >
               Kërko këtë veturë
             </Button>
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                variant="outline"
+                size="lg"
+                nativeButton={false}
+                render={<a href={MESSAGING.whatsapp(message)} target="_blank" rel="noopener" />}
+              >
+                <MessageCircle className="h-4 w-4" />
+                WhatsApp
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                nativeButton={false}
+                render={<a href={MESSAGING.viber} />}
+              >
+                <MessageCircle className="h-4 w-4" />
+                Viber
+              </Button>
+            </div>
             <Button
               variant="outline"
               size="lg"
               nativeButton={false}
-              render={<a href={`tel:${SITE.phone.replace(/\s/g, '')}`} />}
+              render={<a href={MESSAGING.tel} />}
             >
               <Phone className="h-4 w-4" />
               {SITE.phone}
@@ -147,6 +171,43 @@ export default function CarDetail({
 
           <p className="mt-6 text-xs text-muted-foreground">Referenca {id}</p>
         </div>
+
+        <div className="min-w-0 space-y-3 lg:col-start-1 lg:row-start-2">
+          <CarEquipment codes={car.options?.standard} />
+          <CarHistory id={id} rate={rate} />
+        </div>
+      </div>
+
+      {/* Phones: price and the two ways to act stay in reach while scrolling. */}
+      <div data-sticky-bar className="fixed inset-x-0 bottom-0 z-40 flex items-center gap-3 border-t border-border bg-paper/95 px-4 py-3 backdrop-blur lg:hidden">
+        <div className="min-w-0 flex-1">
+          {priceEur && !priceOnRequest ? (
+            <>
+              <p className="numeric font-display text-xl leading-tight font-extrabold text-brass">{eur(priceEur)}</p>
+              <p className="numeric truncate text-xs text-muted-foreground">
+                Me doganë deri në {eur(landedEstimate(priceEur, year, spec?.displacement).total)}
+              </p>
+            </>
+          ) : (
+            <p className="font-display font-bold">Çmimi me kërkesë</p>
+          )}
+        </div>
+        <Button
+          variant="outline"
+          size="icon-lg"
+          nativeButton={false}
+          aria-label="Na shkruani në WhatsApp"
+          render={<a href={MESSAGING.whatsapp(message)} target="_blank" rel="noopener" />}
+        >
+          <MessageCircle className="h-5 w-5" />
+        </Button>
+        <Button
+          size="lg"
+          nativeButton={false}
+          render={<Link href={`/contact?car=${encodeURIComponent(`${title} (${id})`)}`} />}
+        >
+          Kërko
+        </Button>
       </div>
     </div>
   );

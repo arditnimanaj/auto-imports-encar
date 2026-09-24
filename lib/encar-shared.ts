@@ -28,6 +28,16 @@ export type Filters = {
   yearFrom?: number;
   priceMin?: number;
   priceMax?: number;
+  /** Kilometres. */
+  mileageMax?: number;
+  /** Encar's Category: a body type (SUV, 스포츠카, RV) or a size class (중형차). */
+  category?: string;
+  /**
+   * From the inspection report, via Encar's Accident facet: N = no repairs at
+   * all, F = outer panels only, Y = frame damage. 'N' keeps only untouched
+   * cars; 'NF' drops frame-damaged ones.
+   */
+  accident?: 'N' | 'NF';
 };
 
 /**
@@ -84,7 +94,13 @@ export function buildQuery(f: Filters = {}): string {
   if (f.priceMin != null || f.priceMax != null) {
     clauses.push(`Price.range(${f.priceMin ?? ''}..${f.priceMax ?? ''})`);
   }
-  return `(And.${clauses.join('._.')}.)`;
+  if (f.mileageMax != null) clauses.push(`Mileage.range(..${f.mileageMax})`);
+  if (f.category) clauses.push(`Category.${f.category}`);
+  if (f.accident === 'N') clauses.push('Accident.N');
+
+  const and = `(And.${clauses.join('._.')}.)`;
+  // An Or has to be nested this way; see buildFeaturedQuery.
+  return f.accident === 'NF' ? `(And.${and}_.(Or.Accident.N._.Accident.F.))` : and;
 }
 
 export function searchUrl(

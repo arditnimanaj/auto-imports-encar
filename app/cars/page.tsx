@@ -3,7 +3,7 @@ import ClientCars from '@/components/ClientCars';
 import SearchBar from '@/components/SearchBar';
 import { getRate } from '@/lib/fx';
 import { makeSq, modelSq } from '@/lib/i18n';
-import { type SortKey, SORTS } from '@/lib/encar-shared';
+import { type Filters, type SortKey, SORTS } from '@/lib/encar-shared';
 
 export const metadata = { title: 'Veturat në stok' };
 
@@ -24,18 +24,26 @@ export default async function CarsPage({ searchParams }: { searchParams: Promise
   const fuel = one(sp.fuel);
   const q = (one(sp.q) ?? '').trim();
   const yearFrom = num(one(sp.yearFrom));
+  const priceMin = num(one(sp.priceMin));
   const priceMax = num(one(sp.priceMax));
+  const mileageMax = num(one(sp.mileageMax));
+  const category = one(sp.category);
+  const accidentParam = one(sp.accident);
+  const accident: Filters['accident'] =
+    accidentParam === 'N' || accidentParam === 'NF' ? accidentParam : undefined;
   const sortParam = one(sp.sort);
   const sort: SortKey = sortParam && sortParam in SORTS ? (sortParam as SortKey) : 'newest';
   const page = Math.max(1, num(one(sp.page)) ?? 1);
 
   const rate = await getRate();
-  const filters = { make, model, fuel, yearFrom, priceMax };
+  const filters = {
+    make, model, fuel, yearFrom, priceMin, priceMax, mileageMax, category, accident,
+  };
 
   return (
     <>
       <Suspense fallback={<div className="h-[4.25rem] border-b border-border" />}>
-        <SearchBar />
+        <SearchBar rate={rate.krwToEur} />
       </Suspense>
 
       <div className="px-5 py-8 md:px-8">

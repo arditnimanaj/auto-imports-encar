@@ -59,3 +59,18 @@ export function calculateCustoms(
     total: Math.round(v + customs),
   };
 }
+
+/** Engine band from a displacement in cc. Unknown (or electric) counts as small. */
+export function bandFor(cc: number | undefined): EngineBand {
+  if (!cc || cc <= 2000) return 'upTo2000';
+  return cc <= 3000 ? 'upTo3000' : 'over3000';
+}
+
+/**
+ * A car's price with Kosovo customs added, rounded up to the next hundred.
+ * Without an engine size it assumes the smallest band, i.e. the lowest total.
+ */
+export function landedEstimate(price: number, year: number, cc?: number) {
+  const breakdown = calculateCustoms(price, year || new Date().getFullYear(), bandFor(cc));
+  return { breakdown, total: Math.ceil(breakdown.total / 100) * 100 };
+}

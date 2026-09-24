@@ -1,15 +1,7 @@
 import Link from 'next/link';
 import { Info } from 'lucide-react';
-import { calculateCustoms, type EngineBand } from '@/lib/customs';
+import { landedEstimate } from '@/lib/customs';
 import { eur } from '@/lib/format';
-
-/** Engine band from Encar's displacement. Unknown (or electric) counts as small. */
-function bandFor(cc: number | undefined): EngineBand {
-  if (!cc || cc <= 2000) return 'upTo2000';
-  return cc <= 3000 ? 'upTo3000' : 'over3000';
-}
-
-const up100 = (n: number) => Math.ceil(n / 100) * 100;
 
 /**
  * The car's set price, then how far it can go once Kosovo customs are added:
@@ -19,8 +11,7 @@ const up100 = (n: number) => Math.ceil(n / 100) * 100;
 export default function PriceCard({
   price, year, displacement,
 }: { price: number; year: number; displacement?: number }) {
-  const r = calculateCustoms(price, year || new Date().getFullYear(), bandFor(displacement));
-  const total = up100(r.total);
+  const { breakdown: r, total } = landedEstimate(price, year, displacement);
 
   const parts = [
     { label: 'Vetura', amount: price, color: 'bg-paper/80' },

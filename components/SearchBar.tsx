@@ -1,18 +1,19 @@
 'use client';
 
-import { Search, X } from 'lucide-react';
+import { Search, SlidersHorizontal, X } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useTransition } from 'react';
+import { useState, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
+import {
+  Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle,
+} from '@/components/ui/sheet';
 import { YEAR_FLOOR_YEAR } from '@/lib/encar-shared';
-import { FUEL_OPTIONS, makeSq, modelSq } from '@/lib/i18n';
+import { bodySq, FUEL_OPTIONS, makeSq, modelSq } from '@/lib/i18n';
 import { useFacets } from '@/lib/use-facets';
-
-
 
 const SORTS = [
   { value: 'newest', label: 'Më të rejat në fillim' },
@@ -23,12 +24,16 @@ const SORTS = [
 ];
 
 /** Encar prices are in 만원 (10k KRW); labels show the rough euro equivalent. */
-const BUDGETS = [
-  { value: '2500', label: 'Deri në €16.000' },
-  { value: '4000', label: 'Deri në €25.000' },
-  { value: '6000', label: 'Deri në €38.000' },
-  { value: '9000', label: 'Deri në €57.000' },
-  { value: '15000', label: 'Deri në €94.000' },
+const BUDGETS = ['2500', '4000', '6000', '9000', '15000'];
+
+const MILEAGES = ['30000', '60000', '100000', '150000'];
+
+/** Encar's Category facet. Size classes and body types share it. */
+const BODIES = ['SUV', '중형차', '대형차', '준중형차', '소형차', '스포츠카', 'RV'];
+
+const CONDITIONS = [
+  { value: 'N', label: 'Pa asnjë riparim' },
+  { value: 'NF', label: 'Pa dëmtim strukture' },
 ];
 
 const ANY = 'any';
@@ -39,10 +44,19 @@ const YEARS = Array.from(
   (_, i) => new Date().getFullYear() - i,
 );
 
-export default function SearchBar() {
+/** The filters that narrow results, in the order their chips appear. */
+const FILTER_KEYS = [
+  'q', 'make', 'model', 'fuel', 'yearFrom', 'priceMin', 'priceMax',
+  'mileageMax', 'category', 'accident',
+] as const;
+
+const thousands = (n: number) => n.toLocaleString('de-DE');
+
+export default function SearchBar({ rate }: { rate: number }) {
   const router = useRouter();
   const params = useSearchParams();
   const [pending, start] = useTransition();
+  const [sheet, setSheet] = useState(false);
 
   const selectedMake = params.get('make') ?? '';
   // Facets come from the browser too, so nothing here depends on the server.
@@ -62,8 +76,144 @@ export default function SearchBar() {
   }
 
   const get = (k: string) => params.get(k) ?? '';
-  const active = ['q', 'make', 'model', 'fuel', 'yearFrom', 'priceMax', 'sort']
-    .filter((k) => get(k));
+  /** 만원 to a rounded euro label, at today's rate. */
+  const euros = (man: string) =>
+    `€${thousands(Math.round((Number(man) * 10_000 * rate) / 1000) * 1000)}`;
+
+  const chipLabel: Record<(typeof FILTER_KEYS)[number], (v: string) => string> = {
+    q: (v) => `“${v}”`,
+    make: makeSq,
+    model: modelSq,
+    fuel: (v) => FUEL_OPTIONS.find((f) => f.value === v)?.label ?? v,
+    yearFrom: (v) => `${v} e tutje`,
+    priceMin: (v) => `Nga ${euros(v)}`,
+    priceMax: (v) => `Deri në ${euros(v)}`,
+    mileageMax: (v) => `Deri në ${thousands(Number(v))} km`,
+    category: bodySq,
+    accident: (v) => CONDITIONS.find((c) => c.value === v)?.label ?? v,
+  };
+  const active = FILTER_KEYS.filter((k) => get(k));
+
+  function clear(k: string) {
+    // A model means nothing without its make.
+    apply(k === 'make' ? { make: '', model: '' } : { [k]: '' });
+  }
+
+  const fields = (full: boolean) => {
+    const w = (desktop: string) => (full ? 'w-full' : desktop);
+    return (
+      <>
+        <Select value={get('make') || ANY} onValueChange={(v) => apply({ make: String(v ?? ''), model: '' })}>
+          <SelectTrigger className={w('w-40')} aria-label="Marka">
+            <SelectValue>{(v: string) => (v && v !== ANY ? makeSq(v) : 'Çdo markë')}</SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ANY}>Çdo markë</SelectItem>
+            {makes.map((m) => (
+              <SelectItem key={m.name} value={m.name}>
+                {makeSq(m.name)} ({m.count})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={get('model') || ANY}
+          onValueChange={(v) => apply({ model: String(v ?? '') })}
+          disabled={!models.length}
+        >
+          <SelectTrigger className={w('w-44')} aria-label="Modeli">
+            <SelectValue>{(v: string) => (v && v !== ANY ? modelSq(v) : 'Çdo model')}</SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ANY}>Çdo model</SelectItem>
+            {models.map((m) => (
+              <SelectItem key={m.name} value={m.name}>
+                {modelSq(m.name)} ({m.count})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={get('category') || ANY} onValueChange={(v) => apply({ category: String(v ?? '') })}>
+          <SelectTrigger className={w('w-36')} aria-label="Karroceria">
+            <SelectValue>{(v: string) => (v && v !== ANY ? bodySq(v) : 'Çdo karroceri')}</SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ANY}>Çdo karroceri</SelectItem>
+            {BODIES.map((b) => <SelectItem key={b} value={b}>{bodySq(b)}</SelectItem>)}
+          </SelectContent>
+        </Select>
+
+        <Select value={get('fuel') || ANY} onValueChange={(v) => apply({ fuel: String(v ?? '') })}>
+          <SelectTrigger className={w('w-32')} aria-label="Karburanti">
+            <SelectValue>{(v: string) => FUEL_OPTIONS.find((f) => f.value === v)?.label ?? 'Çdo karburant'}</SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ANY}>Çdo karburant</SelectItem>
+            {FUEL_OPTIONS.map((f) => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
+
+        <Select value={get('yearFrom') || ANY} onValueChange={(v) => apply({ yearFrom: String(v ?? '') })}>
+          <SelectTrigger className={w('w-36')} aria-label="Viti nga">
+            <SelectValue>{(v: string) => (v && v !== ANY ? `${v} e tutje` : 'Çdo vit')}</SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ANY}>Çdo vit</SelectItem>
+            {YEARS.map((y) => <SelectItem key={y} value={String(y)}>{y} e tutje</SelectItem>)}
+          </SelectContent>
+        </Select>
+
+        <Select value={get('priceMax') || ANY} onValueChange={(v) => apply({ priceMax: String(v ?? '') })}>
+          <SelectTrigger className={w('w-40')} aria-label="Buxheti">
+            <SelectValue>{(v: string) => (v && v !== ANY ? `Deri në ${euros(v)}` : 'Çdo çmim')}</SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ANY}>Çdo çmim</SelectItem>
+            {BUDGETS.map((b) => <SelectItem key={b} value={b}>Deri në {euros(b)}</SelectItem>)}
+          </SelectContent>
+        </Select>
+
+        <Select value={get('mileageMax') || ANY} onValueChange={(v) => apply({ mileageMax: String(v ?? '') })}>
+          <SelectTrigger className={w('w-44')} aria-label="Kilometrazhi">
+            <SelectValue>
+              {(v: string) => (v && v !== ANY ? `Deri në ${thousands(Number(v))} km` : 'Çdo kilometrazh')}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ANY}>Çdo kilometrazh</SelectItem>
+            {MILEAGES.map((m) => (
+              <SelectItem key={m} value={m}>Deri në {thousands(Number(m))} km</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={get('accident') || ANY} onValueChange={(v) => apply({ accident: String(v ?? '') })}>
+          <SelectTrigger className={w('w-48')} aria-label="Gjendja">
+            <SelectValue>
+              {(v: string) => CONDITIONS.find((c) => c.value === v)?.label ?? 'Çdo gjendje'}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ANY}>Çdo gjendje</SelectItem>
+            {CONDITIONS.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
+
+        <Select value={get('sort') || 'newest'} onValueChange={(v) => apply({ sort: v === 'newest' ? '' : String(v ?? '') })}>
+          <SelectTrigger className={w('w-52')} aria-label="Renditja">
+            <SelectValue>
+              {(v: string) => SORTS.find((o) => o.value === v)?.label ?? 'Më të rejat në fillim'}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {SORTS.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </>
+    );
+  };
 
   return (
     <div className="sticky top-[4.5rem] z-30 border-b border-border bg-paper/95 backdrop-blur supports-backdrop-filter:bg-paper/80">
@@ -81,6 +231,7 @@ export default function SearchBar() {
             aria-hidden
           />
           <Input
+            key={get('q')}
             name="q"
             defaultValue={get('q')}
             placeholder="Kërko model — X5, E-Class, Tucson"
@@ -89,107 +240,63 @@ export default function SearchBar() {
           />
         </div>
 
-        <Select value={get('make') || ANY} onValueChange={(v) => apply({ make: String(v ?? ""), model: "" })}>
-          <SelectTrigger className="w-40" aria-label="Marka">
-            <SelectValue>{(v: string) => (v && v !== ANY ? makeSq(v) : "Çdo markë")}</SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ANY}>Çdo markë</SelectItem>
-            {makes.map((m) => (
-              <SelectItem key={m.name} value={m.name}>
-                {makeSq(m.name)} ({m.count})
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select
-          value={get('model') || ANY}
-          onValueChange={(v) => apply({ model: String(v ?? '') })}
-          disabled={!models.length}
+        {/* Phones get one button and a sheet; nine selects do not fit a row. */}
+        <Button
+          type="button"
+          variant="outline"
+          className="md:hidden"
+          onClick={() => setSheet(true)}
         >
-          <SelectTrigger className="w-44" aria-label="Modeli">
-            <SelectValue>
-              {(v: string) => (v && v !== ANY ? modelSq(v) : 'Çdo model')}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ANY}>Çdo model</SelectItem>
-            {models.map((m) => (
-              <SelectItem key={m.name} value={m.name}>
-                {modelSq(m.name)} ({m.count})
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={get('fuel') || ANY} onValueChange={(v) => apply({ fuel: String(v ?? "") })}>
-          <SelectTrigger className="w-32" aria-label="Karburanti">
-            <SelectValue>{(v: string) => FUEL_OPTIONS.find((f) => f.value === v)?.label ?? "Çdo karburant"}</SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ANY}>Çdo karburant</SelectItem>
-            {FUEL_OPTIONS.map((f) => (
-              <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={get('yearFrom') || ANY} onValueChange={(v) => apply({ yearFrom: String(v ?? '') })}>
-          <SelectTrigger className="w-36" aria-label="Viti nga">
-            <SelectValue>
-              {(v: string) => (v && v !== ANY ? `${v} e tutje` : 'Çdo vit')}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ANY}>Çdo vit</SelectItem>
-            {YEARS.map((y) => (
-              <SelectItem key={y} value={String(y)}>{y} e tutje</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={get('priceMax') || ANY} onValueChange={(v) => apply({ priceMax: String(v ?? "") })}>
-          <SelectTrigger className="w-40" aria-label="Buxheti">
-            <SelectValue>{(v: string) => BUDGETS.find((b) => b.value === v)?.label ?? "Çdo çmim"}</SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ANY}>Çdo çmim</SelectItem>
-            {BUDGETS.map((b) => (
-              <SelectItem key={b.value} value={b.value}>{b.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={get('sort') || 'newest'} onValueChange={(v) => apply({ sort: v === "newest" ? "" : String(v ?? "") })}>
-          <SelectTrigger className="w-44" aria-label="Renditja">
-            <SelectValue>
-              {(v: string) => SORTS.find((o) => o.value === v)?.label ?? 'Më të rejat në fillim'}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            {SORTS.map((s) => (
-              <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Button type="submit" disabled={pending}>
-          {pending ? 'Duke kërkuar' : 'Kërko'}
+          <SlidersHorizontal className="h-4 w-4" />
+          Filtro{active.filter((k) => k !== 'q').length ? ` (${active.filter((k) => k !== 'q').length})` : ''}
         </Button>
 
-        {active.length > 0 && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => start(() => router.push('/cars'))}
-          >
-            <X className="h-4 w-4" />
-            Pastro {active.length}
-          </Button>
-        )}
+        <div className="hidden flex-wrap items-center gap-2 md:contents">{fields(false)}</div>
+
+        <Button type="submit" disabled={pending} className="hidden md:inline-flex">
+          {pending ? 'Duke kërkuar' : 'Kërko'}
+        </Button>
       </form>
+
+      {active.length > 0 && (
+        <div className="no-scrollbar flex items-center gap-2 overflow-x-auto px-5 pb-3 md:flex-wrap md:px-8">
+          {active.map((k) => (
+            <button
+              key={k}
+              type="button"
+              onClick={() => clear(k)}
+              className="flex shrink-0 items-center gap-1 rounded-full border border-border bg-mist/60 py-1 pr-2 pl-3 text-xs font-medium transition-colors hover:border-slate"
+              aria-label={`Hiq filtrin ${chipLabel[k](get(k))}`}
+            >
+              {chipLabel[k](get(k))}
+              <X className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
+            </button>
+          ))}
+          {active.length > 1 && (
+            <button
+              type="button"
+              onClick={() => start(() => router.push(get('sort') ? `/cars?sort=${get('sort')}` : '/cars'))}
+              className="shrink-0 px-1 text-xs font-medium text-slate hover:text-ink hover:underline"
+            >
+              Pastro të gjitha
+            </button>
+          )}
+        </div>
+      )}
+
+      <Sheet open={sheet} onOpenChange={setSheet}>
+        <SheetContent side="bottom" className="max-h-[85dvh] rounded-t-xl">
+          <SheetHeader>
+            <SheetTitle>Filtrat</SheetTitle>
+          </SheetHeader>
+          <div className="grid gap-3 overflow-y-auto px-4">{fields(true)}</div>
+          <SheetFooter>
+            <Button onClick={() => setSheet(false)} disabled={pending}>
+              {pending ? 'Duke kërkuar…' : 'Shiko rezultatet'}
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
