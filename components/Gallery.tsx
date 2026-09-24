@@ -3,7 +3,7 @@
 import CarPhoto from '@/components/CarPhoto';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 export type Photo = { src: string; full: string; label: string };
 
@@ -36,6 +36,42 @@ export default function Gallery({ photos, alt }: { photos: Photo[]; alt: string 
       document.body.style.overflow = prev;
     };
   }, [open, move]);
+
+  const trackRef = useRef<HTMLDivElement>(null);
+  /** The slide the track shows, as far as we know. */
+  const shown = useRef<number | null>(null);
+  /** Set while we scroll the track ourselves, so its scroll events are ignored. */
+  const scrollingTo = useRef<number | null>(null);
+
+  const onTrackScroll = useCallback(() => {
+    const el = trackRef.current;
+    if (!el || !el.clientWidth) return;
+    const i = Math.round(el.scrollLeft / el.clientWidth);
+    if (scrollingTo.current != null) {
+      if (Math.abs(el.scrollLeft - scrollingTo.current * el.clientWidth) < 2) {
+        scrollingTo.current = null;
+      }
+      return;
+    }
+    if (i !== shown.current && i >= 0 && i < photos.length) {
+      shown.current = i;
+      setOpen(i);
+    }
+  }, [photos.length]);
+
+  // Arrows, keys and thumbnails move the track. A swipe has already moved it,
+  // and set `shown` to match, so there is nothing to do.
+  useLayoutEffect(() => {
+    const el = trackRef.current;
+    if (open == null || !el) { shown.current = null; scrollingTo.current = null; return; }
+    if (open === shown.current) return;
+    const near = shown.current != null && Math.abs(open - shown.current) === 1;
+    shown.current = open;
+    const left = open * el.clientWidth;
+    if (Math.abs(el.scrollLeft - left) < 2) return;
+    scrollingTo.current = open;
+    el.scrollTo({ left, behavior: near && !reduced ? 'smooth' : 'auto' });
+  }, [open, reduced]);
 
   // Keep the active thumbnail visible as you arrow through the set.
   useEffect(() => {
@@ -128,23 +164,37 @@ export default function Gallery({ photos, alt }: { photos: Photo[]; alt: string 
               </button>
             </div>
 
-            <div className="relative flex min-h-0 flex-1 items-center justify-center px-2 md:px-16">
+            <div className="relative flex min-h-0 flex-1 items-center">
               <Arrow side="left" onClick={(e) => { e.stopPropagation(); move(-1); }} />
-              <motion.div
-                key={open}
-                className="relative h-full w-full max-w-5xl"
+              {/* A native scroll-snap track, so a phone swipes photo to photo
+                  with its own momentum. Only the current photo and its two
+                  neighbours are mounted; the rest are empty slides. */}
+              <div
+                ref={trackRef}
+                onScroll={onTrackScroll}
+                // A finger on the track takes over from any scroll we started.
+                onTouchStart={() => { scrollingTo.current = null; }}
                 onClick={(e) => e.stopPropagation()}
-                initial={reduced ? false : { opacity: 0, scale: 0.98 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                className="no-scrollbar flex h-full w-full snap-x snap-mandatory overflow-x-auto overscroll-x-contain"
               >
-                <CarPhoto
-                  src={photos[open].full}
-                  alt={`${alt} — fotoja ${open + 1}`}
-                  priority
-                  className="absolute inset-0 h-full w-full object-contain"
-                />
-              </motion.div>
+                {photos.map((p, i) => (
+                  <div
+                    key={p.src}
+                    className="relative h-full w-full shrink-0 snap-center snap-always px-2 md:px-16"
+                  >
+                    {Math.abs(i - open) <= 1 && (
+                      <div className="relative mx-auto h-full max-w-5xl">
+                        <CarPhoto
+                          src={p.full}
+                          alt={`${alt} — fotoja ${i + 1}`}
+                          priority={i === open}
+                          className="absolute inset-0 h-full w-full object-contain"
+                        />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
               <Arrow side="right" onClick={(e) => { e.stopPropagation(); move(1); }} />
             </div>
 
@@ -186,7 +236,7 @@ function Arrow({
     <button
       onClick={onClick}
       aria-label={side === 'left' ? 'Fotoja e mëparshme' : 'Fotoja tjetër'}
-      className={`absolute z-10 grid h-11 w-11 place-items-center rounded-full bg-paper/10 text-mist transition-colors hover:bg-paper/20 hover:text-paper ${
+      className={`absolute z-10 hidden h-11 w-11 md:grid place-items-center rounded-full bg-paper/10 text-mist transition-colors hover:bg-paper/20 hover:text-paper ${
         side === 'left' ? 'left-1 md:left-4' : 'right-1 md:right-4'
       }`}
     >
