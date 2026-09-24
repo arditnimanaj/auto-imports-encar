@@ -229,3 +229,79 @@ export type VehicleDetail = {
   };
   photos: { path: string; type: string; code: string }[];
 };
+
+/**
+ * Insurance history (보험이력), from Korea's insurance development institute
+ * via Encar. Served to browsers with `Access-Control-Allow-Origin: *`; comes
+ * back empty for the few listings without a record.
+ */
+export function recordUrl(id: string): string {
+  return `https://api.encar.com/v1/readside/record/vehicle/${encodeURIComponent(id)}/open`;
+}
+
+/** The statutory performance/condition inspection (성능·상태점검기록부). */
+export function inspectionUrl(id: string): string {
+  return `https://api.encar.com/v1/readside/inspection/vehicle/${encodeURIComponent(id)}`;
+}
+
+export type CarRecord = {
+  firstDate?: string | null;
+  /** Claims where this car was damaged (types 1 and 2 below). */
+  myAccidentCnt: number;
+  myAccidentCost: number;
+  /** Claims for damage this car did to another (type 3). */
+  otherAccidentCnt: number;
+  otherAccidentCost: number;
+  ownerChangeCnt: number;
+  carNoChangeCnt: number;
+  totalLossCnt: number;
+  floodTotalLossCnt: number;
+  floodPartLossCnt: number | null;
+  robberCnt: number;
+  /** Periods registered for public-office, commercial (taxi) and rental use. */
+  government: number;
+  business: number;
+  loan: number;
+  /**
+   * type 1: own car, paid by its own insurer; 2: own car, paid by the other
+   * party's insurer; 3: damage caused to another car. Amounts in KRW.
+   */
+  accidents: {
+    type: '1' | '2' | '3';
+    date: string;
+    insuranceBenefit: number;
+    partCost: number;
+    laborCost: number;
+    paintingCost: number;
+  }[];
+};
+
+type Coded = { code: string; title: string };
+
+export type InspectionItem = {
+  type: Coded;
+  statusType: Coded | null;
+  children?: InspectionItem[];
+};
+
+export type Inspection = {
+  master: {
+    /** Frame (주요골격) damage -- Korea's legal definition of an accident car. Encar's spelling. */
+    accdient: boolean;
+    /** An outer panel was replaced or welded. */
+    simpleRepair: boolean;
+    detail: {
+      mileage?: number;
+      issueDate?: string;
+      tuning?: boolean;
+      waterlog?: boolean;
+      recall?: boolean;
+      engineCheck?: string;
+      trnsCheck?: string;
+    } | null;
+  };
+  /** Mechanical checks, grouped by system (engine, transmission, brakes...). */
+  inners?: { type: Coded; children?: InspectionItem[] }[];
+  /** Body panels with findings. `attributes` holds the rank, e.g. RANK_ONE. */
+  outers?: { type: Coded; statusTypes: Coded[]; attributes?: string[] }[];
+};

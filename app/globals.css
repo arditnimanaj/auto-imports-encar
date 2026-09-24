@@ -15,6 +15,8 @@
   --color-brass: #c8952f;
   --color-brass-bright: #e0aa42;
   --color-alert: #b4452f;
+  /* Only for a clean result in a car's history or inspection. */
+  --color-ok: #3d7a57;
 
   --font-display: var(--font-display-face), ui-sans-serif, system-ui, sans-serif;
   --font-sans: var(--font-body-face), ui-sans-serif, system-ui, sans-serif;
