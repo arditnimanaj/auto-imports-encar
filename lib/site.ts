@@ -14,5 +14,6 @@ export const SITE = {
 export const NAV = [
   { href: '/', label: 'Ballina' },
   { href: '/cars', label: 'Veturat' },
+  { href: '/kalkulatori', label: 'Kalkulatori i Doganës' },
   { href: '/contact', label: 'Kontakti' },
 ] as const;
