@@ -68,7 +68,12 @@ export function buildQuery(f: Filters = {}): string {
   // CarType.N = imported. SellType.일반 = outright sale: lease (리스) and rent
   // (렌트) listings quote a takeover/deposit figure in `Price`, not the car's
   // price, so including them would show a late-model BMW i5 at about EUR 700.
-  const clauses = ['Hidden.N', 'CarType.N', 'SellType.일반'];
+  //
+  // ServiceCopyCar.ORIGINAL drops Encar's re-listings: a dealer car put up
+  // again under a new Id (for home delivery) with the same photos, flagged
+  // DUPLICATION. About a third of all listings are these copies, and since
+  // both share a ModifiedDate they often sat side by side in the grid.
+  const clauses = ['Hidden.N', 'CarType.N', 'SellType.일반', 'ServiceCopyCar.ORIGINAL'];
   if (f.make) clauses.push(`Manufacturer.${f.make}`);
   if (f.fuel) clauses.push(`FuelType.${f.fuel}`);
   if (f.model) clauses.push(`ModelGroup.${f.model}`);
