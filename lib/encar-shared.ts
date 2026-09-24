@@ -228,6 +228,8 @@ export type VehicleDetail = {
     salesStatus?: string | null;
   };
   photos: { path: string; type: string; code: string }[];
+  /** Equipment codes; see lib/options for the catalogue. */
+  options?: { standard?: string[] };
 };
 
 /**

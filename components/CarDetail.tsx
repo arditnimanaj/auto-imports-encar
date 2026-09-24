@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { ArrowLeft, Phone } from 'lucide-react';
+import CarEquipment from '@/components/CarEquipment';
 import CarHistory from '@/components/CarHistory';
 import Gallery, { type Photo } from '@/components/Gallery';
 import PriceCard from '@/components/PriceCard';
@@ -73,7 +74,10 @@ export default function CarDetail({
       <div className="mt-6 grid gap-10 lg:grid-cols-[1fr_20rem]">
         <div className="min-w-0">
           <Gallery photos={photos} alt={title} />
-          <CarHistory id={id} rate={rate} />
+          <div className="mt-10 space-y-3">
+            <CarEquipment codes={car.options?.standard} />
+            <CarHistory id={id} rate={rate} />
+          </div>
         </div>
 
         <div className="lg:sticky lg:top-24 lg:self-start">

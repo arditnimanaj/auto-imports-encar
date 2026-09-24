@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Check, TriangleAlert, X } from 'lucide-react';
+import Disclosure from '@/components/Disclosure';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   inspectionUrl, recordUrl, type CarRecord, type Inspection,
@@ -39,11 +40,9 @@ export default function CarHistory({ id, rate }: { id: string; rate: number }) {
 
   if (record.isPending && inspection.isPending) {
     return (
-      <div className="mt-12 space-y-4">
-        <Skeleton className="h-7 w-56" />
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-lg" />)}
-        </div>
+      <div className="space-y-3">
+        <Skeleton className="h-[4.5rem] rounded-lg" />
+        <Skeleton className="h-[4.5rem] rounded-lg" />
       </div>
     );
   }
@@ -51,10 +50,10 @@ export default function CarHistory({ id, rate }: { id: string; rate: number }) {
   if (!record.data && !inspection.data) return null;
 
   return (
-    <div className="mt-12 space-y-14">
+    <>
       {record.data && <History r={record.data} rate={rate} />}
       {inspection.data && <Condition insp={inspection.data} />}
-    </div>
+    </>
   );
 }
 
@@ -75,12 +74,21 @@ function History({ r, rate }: { r: CarRecord; rate: number }) {
     ['Institucion shtetëror', r.government > 0],
   ];
 
+  const flagged = checks.filter(([, hit]) => hit).map(([label]) => label);
+  const clean = !r.myAccidentCnt && !flagged.length;
+  const summary = [
+    r.myAccidentCnt
+      ? `${r.myAccidentCnt} ${r.myAccidentCnt === 1 ? 'dëm' : 'dëme'} · ${eur(toEur(r.myAccidentCost, rate))}`
+      : 'Pa dëme të veturës',
+    ...flagged,
+    `${r.ownerChangeCnt} ${r.ownerChangeCnt === 1 ? 'ndërrim' : 'ndërrime'} pronari`,
+  ].join(' · ');
+
   return (
-    <section>
-      <Heading
-        title="Historia e sigurimit"
-        note="Nga regjistri korean i siguracioneve (KIDI), përmes Encar."
-      />
+    <Disclosure title="Historia e sigurimit" summary={<Verdict ok={clean}>{summary}</Verdict>}>
+      <p className="mb-4 text-xs text-muted-foreground">
+        Nga regjistri korean i siguracioneve (KIDI), përmes Encar.
+      </p>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Stat
@@ -143,7 +151,7 @@ function History({ r, rate }: { r: CarRecord; rate: number }) {
           </p>
         </div>
       )}
-    </section>
+    </Disclosure>
   );
 }
 
@@ -173,12 +181,22 @@ function Condition({ insp }: { insp: Inspection }) {
     d?.mileage != null && `në ${km(d.mileage)}`,
   ].filter(Boolean).join(' ');
 
+  const mechanical = systems.filter((s) => s.findings.length).length;
+  const bodyNote = panels.length
+    ? `${panels.length} ${panels.length === 1 ? 'panel i riparuar' : 'panele të riparuara'}`
+    : insp.master.simpleRepair ? 'Panele të riparuara' : 'Panelet origjinale';
+  const summary = [
+    insp.master.accdient ? 'Dëmtim i strukturës' : 'Pa dëmtim strukture',
+    bodyNote,
+    mechanical ? `${mechanical} vërejtje mekanike` : null,
+  ].filter(Boolean).join(' · ');
+  const clean = !insp.master.accdient && !insp.master.simpleRepair && !panels.length && !mechanical;
+
   return (
-    <section>
-      <Heading
-        title="Kontrolli teknik"
-        note={`Raporti zyrtar i gjendjes në Kore${meta ? ` · ${meta}` : ''}.`}
-      />
+    <Disclosure title="Kontrolli teknik" summary={<Verdict ok={clean}>{summary}</Verdict>}>
+      <p className="mb-4 text-xs text-muted-foreground">
+        Raporti zyrtar i gjendjes në Kore{meta ? ` · ${meta}` : ''}.
+      </p>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {verdicts.map(([label, ok, value]) => (
@@ -249,7 +267,7 @@ function Condition({ insp }: { insp: Inspection }) {
           </ul>
         </div>
       )}
-    </section>
+    </Disclosure>
   );
 }
 
@@ -312,12 +330,14 @@ function BodyDiagram({ panels }: { panels: { title: string; tone: Tone }[] }) {
 
 /* ------------------------------------------------------------------ */
 
-function Heading({ title, note }: { title: string; note: string }) {
+function Verdict({ ok, children }: { ok: boolean; children: React.ReactNode }) {
   return (
-    <div className="mb-5">
-      <h2 className="font-display text-xl font-bold md:text-2xl">{title}</h2>
-      <p className="mt-1 text-sm text-muted-foreground">{note}</p>
-    </div>
+    <span className="flex items-start gap-1.5">
+      {ok
+        ? <Check className="mt-0.5 h-4 w-4 shrink-0 text-ok" aria-hidden />
+        : <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-alert" aria-hidden />}
+      <span>{children}</span>
+    </span>
   );
 }
 
