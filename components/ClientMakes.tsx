@@ -7,7 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 /** Brand tiles with live counts, fetched in the browser. */
 export default function ClientMakes({ limit = 12 }: { limit?: number }) {
-  const makes = useFacets('Manufacturer', []);
+  const makes = useFacets('Manufacturer');
 
   if (!makes.length) {
     return (

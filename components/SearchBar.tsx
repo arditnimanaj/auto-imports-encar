@@ -46,8 +46,8 @@ export default function SearchBar() {
 
   const selectedMake = params.get('make') ?? '';
   // Facets come from the browser too, so nothing here depends on the server.
-  const makes = useFacets('Manufacturer', []);
-  const models = useFacets('ModelGroup', [], { make: selectedMake }, Boolean(selectedMake));
+  const makes = useFacets('Manufacturer');
+  const models = useFacets('ModelGroup', { make: selectedMake }, Boolean(selectedMake));
 
   // Every control writes to the URL so results stay shareable and the server
   // components re-render with the new filters.

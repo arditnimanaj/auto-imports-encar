@@ -1,7 +1,7 @@
 import CarPhoto from "@/components/CarPhoto";
 import Link from "next/link";
 import type { Car } from "@/lib/encar-shared";
-import { eur, km, toEur, ym } from "@/lib/format";
+import { carEur, eur, km, ym } from "@/lib/format";
 import { fuelSq, makeSq, modelSq } from "@/lib/i18n";
 import { Badge } from "@/components/ui/badge";
 
@@ -50,7 +50,7 @@ export default function CarCard({
           </p>
         ) : (
           <p className="numeric mt-3 font-display text-xl font-bold text-brass">
-            {eur(toEur(car.priceKrw, rate))}
+            {eur(carEur(car.priceKrw, rate))}
           </p>
         )}
 

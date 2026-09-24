@@ -1,11 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import CarDetail from '@/components/CarDetail';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { vehicleUrl, type VehicleDetail } from '@/lib/encar-shared';
+import { VEHICLE_MS } from '@/lib/query';
 
 /**
  * Used when the server was refused the detail endpoint. Fetches the same car
@@ -13,41 +14,26 @@ import { vehicleUrl, type VehicleDetail } from '@/lib/encar-shared';
  * server render is invisible to the buyer apart from a brief skeleton.
  */
 export default function ClientVehicle({
-  id, rate, live, rateUpdated,
-}: { id: string; rate: number; live: boolean; rateUpdated: string | null }) {
-  const [state, setState] = useState<
-    | { status: 'loading' }
-    | { status: 'ok'; car: VehicleDetail }
-    | { status: 'missing' }
-    | { status: 'error' }
-  >({ status: 'loading' });
+  id, rate,
+}: { id: string; rate: number }) {
+  // A 404 resolves to null rather than throwing, so "sold" is cached too.
+  const { data: car, status } = useQuery({
+    queryKey: ['vehicle', id],
+    queryFn: async (): Promise<VehicleDetail | null> => {
+      const res = await fetch(vehicleUrl(id));
+      if (res.status === 404) return null;
+      if (!res.ok) throw new Error(String(res.status));
+      return (await res.json()) as VehicleDetail;
+    },
+    staleTime: VEHICLE_MS,
+    gcTime: VEHICLE_MS,
+  });
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch(vehicleUrl(id));
-        if (res.status === 404) {
-          if (!cancelled) setState({ status: 'missing' });
-          return;
-        }
-        if (!res.ok) throw new Error(String(res.status));
-        const car = (await res.json()) as VehicleDetail;
-        if (!cancelled) setState({ status: 'ok', car });
-      } catch {
-        if (!cancelled) setState({ status: 'error' });
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [id]);
-
-  if (state.status === 'ok') {
-    return (
-      <CarDetail car={state.car} id={id} rate={rate} live={live} rateUpdated={rateUpdated} />
-    );
+  if (car) {
+    return <CarDetail car={car} id={id} rate={rate} />;
   }
 
-  if (state.status === 'loading') {
+  if (status === 'pending') {
     return (
       <div className="mx-auto max-w-7xl px-5 py-8 md:px-8">
         <Skeleton className="h-4 w-24" />
@@ -72,7 +58,7 @@ export default function ClientVehicle({
     );
   }
 
-  const missing = state.status === 'missing';
+  const missing = car === null;
   return (
     <div className="mx-auto max-w-lg px-5 py-24 text-center">
       <h1 className="font-display text-2xl font-bold">

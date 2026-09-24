@@ -1,37 +1,21 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { searchUrl, type Filters, type SearchResponse } from '@/lib/encar-shared';
+import { useQuery } from '@tanstack/react-query';
+import { latestQuery } from '@/lib/query';
 
 /**
- * The live stock number, fetched from the browser when the server was refused.
- * Renders `fallback` until it has a real figure, so the page never shows a
- * confident "0 cars" it cannot stand behind.
+ * The live stock number, read from the homepage's latest-cars query so it
+ * costs no request of its own. Renders `fallback` until it has a real figure,
+ * so the page never shows a confident "0 cars" it cannot stand behind.
  */
 export default function ClientCount({
-  filters = {}, fallback = '—', format = (n: number) => n.toLocaleString('de-DE'),
+  fallback = '—', format = (n: number) => n.toLocaleString('de-DE'),
 }: {
-  filters?: Filters;
   fallback?: string;
   format?: (n: number) => string;
 }) {
-  const [count, setCount] = useState<number | null>(null);
+  // On failure the fallback simply stays in place.
+  const { data: count } = useQuery({ ...latestQuery, select: (d) => d.count });
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch(searchUrl(filters, { offset: 0, limit: 1 }));
-        if (!res.ok) return;
-        const data = (await res.json()) as SearchResponse;
-        if (!cancelled && data.Count) setCount(data.Count);
-      } catch {
-        // Leave the fallback in place.
-      }
-    })();
-    return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(filters)]);
-
-  return <>{count == null ? fallback : format(count)}</>;
+  return <>{!count ? fallback : format(count)}</>;
 }

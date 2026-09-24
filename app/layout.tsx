@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Bricolage_Grotesque, Manrope } from 'next/font/google';
 import Header from '@/components/Header';
 import SiteFooter from '@/components/SiteFooter';
+import Providers from '@/components/Providers';
 import { Analytics } from '@vercel/analytics/next';
 import { SITE } from '@/lib/site';
 import './globals.css';
@@ -27,9 +28,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="sq" className={`${display.variable} ${body.variable}`}>
       <body className="min-h-screen">
-        <Header />
-        <main>{children}</main>
-        <SiteFooter />
+        <Providers>
+          <Header />
+          <main>{children}</main>
+          <SiteFooter />
+        </Providers>
         <Analytics />
       </body>
     </html>

@@ -1,11 +1,12 @@
 import Link from 'next/link';
 import { ArrowLeft, Phone } from 'lucide-react';
 import Gallery, { type Photo } from '@/components/Gallery';
+import PriceCard from '@/components/PriceCard';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { imageUrl, PRICE_ON_REQUEST, type VehicleDetail } from '@/lib/encar-shared';
-import { eur, km, krw, toEur, ym } from '@/lib/format';
+import { carEur, km, ym } from '@/lib/format';
 import { bodySq, colorSq, fuelSq, makeSq, modelSq, transmissionSq } from '@/lib/i18n';
 import { SITE } from '@/lib/site';
 
@@ -15,13 +16,11 @@ import { SITE } from '@/lib/site';
  * serves both paths.
  */
 export default function CarDetail({
-  car, id, rate, live = true, rateUpdated,
+  car, id, rate,
 }: {
   car: VehicleDetail;
   id: string;
   rate: number;
-  live?: boolean;
-  rateUpdated?: string | null;
 }) {
   const { category: cat, spec } = car;
   const make = cat.manufacturerEnglishName || makeSq(cat.manufacturerName);
@@ -35,6 +34,7 @@ export default function CarDetail({
   const rawPrice = car.advertisement?.price ?? null;
   const priceOnRequest = rawPrice === PRICE_ON_REQUEST;
   const priceKrw = rawPrice != null && !priceOnRequest ? rawPrice * 10_000 : null;
+  const priceEur = carEur(priceKrw, rate);
   const title = `${make} ${model}`;
 
   // Encar repeats photo paths within a listing, so dedupe by URL.
@@ -97,7 +97,7 @@ export default function CarDetail({
             </p>
           )}
 
-          {priceOnRequest ? (
+          {priceOnRequest || !priceEur ? (
             <>
               <p className="mt-6 font-display text-3xl font-bold">Çmimi me kërkesë</p>
               <p className="mt-1 text-sm text-muted-foreground">
@@ -106,22 +106,8 @@ export default function CarDetail({
               </p>
             </>
           ) : (
-            <>
-              <p className="numeric mt-6 font-display text-4xl font-extrabold text-brass">
-                {eur(toEur(priceKrw, rate))}
-              </p>
-              <p className="numeric mt-1 text-sm text-muted-foreground">
-                {krw(priceKrw)} në Kore
-              </p>
-            </>
+            <PriceCard price={priceEur} year={year} displacement={spec?.displacement} />
           )}
-          <p className="mt-3 text-xs text-muted-foreground">
-            {!priceOnRequest && 'Çmimi para transportit, doganës dhe regjistrimit. '}
-            Na pyetni për totalin e dorëzuar në {SITE.city}.
-            {/* The conversion note only means anything when there is a price. */}
-            {!priceOnRequest && !live && ' Kursi i këmbimit është i përafërt.'}
-            {!priceOnRequest && live && rateUpdated ? ` Kursi nga ${rateDate(rateUpdated)}.` : ''}
-          </p>
 
           <div className="mt-6 flex flex-col gap-2">
             <Button
@@ -158,20 +144,4 @@ export default function CarDetail({
       </div>
     </div>
   );
-}
-
-/**
- * The FX API returns an English RFC-1123 date. Intl cannot help here: browser
- * ICU has no Albanian month names (sq-AL falls back to English, sq-XK gives
- * "M09"), so the names are spelled out.
- */
-const MONTHS_SQ = [
-  'janar', 'shkurt', 'mars', 'prill', 'maj', 'qershor',
-  'korrik', 'gusht', 'shtator', 'tetor', 'nëntor', 'dhjetor',
-];
-
-function rateDate(v: string): string {
-  const d = new Date(v);
-  if (Number.isNaN(d.getTime())) return v;
-  return `${d.getDate()} ${MONTHS_SQ[d.getMonth()]} ${d.getFullYear()}`;
 }

@@ -25,7 +25,7 @@ export default async function Home() {
 
       <Section
         title="Nëntë vetura, të zgjedhura rishtas"
-        note="Një përzgjedhje tjetër çdo vizitë, me theks te markat gjermane."
+        note="Një përzgjedhje e re çdo tre orë, me theks te markat gjermane."
         href="/cars"
         linkLabel="Shiko të gjitha veturat"
       >

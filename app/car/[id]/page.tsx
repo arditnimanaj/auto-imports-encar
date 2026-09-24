@@ -12,8 +12,6 @@ export default async function CarPage({ params }: { params: Promise<{ id: string
     <ClientVehicle
       id={id}
       rate={rate.krwToEur}
-      live={rate.live}
-      rateUpdated={rate.updated}
     />
   );
 }

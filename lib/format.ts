@@ -15,3 +15,11 @@ export const km = (n: number | null) =>
 
 export const ym = (year: number, month: number) =>
   `${year}/${String(month).padStart(2, '0')}`;
+
+/**
+ * A car's asking price in EUR, rounded up to the next hundred so it reads as
+ * a set price rather than a live conversion (11,220 becomes 11,300).
+ */
+export function carEur(krw: number | null, rate: number): number | null {
+  return krw == null ? null : Math.ceil((krw * rate) / 100) * 100;
+}

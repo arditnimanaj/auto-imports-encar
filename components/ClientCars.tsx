@@ -1,14 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import CarCard from '@/components/CarCard';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  buildFeaturedQuery, buildQuery, normalize, searchUrl, searchUrlFor,
-  type Car, type Filters, type SearchResponse, type SortKey,
-} from '@/lib/encar-shared';
+import type { Filters, SortKey } from '@/lib/encar-shared';
+import { carsQuery, featuredQuery } from '@/lib/query';
 
 type Props = {
   filters: Filters;
@@ -42,64 +41,21 @@ export default function ClientCars({
   filters, offset = 0, limit = 24, sort = 'newest', rate, onCount, className,
   query, featured, meta,
 }: Props) {
-  const [count, setCount] = useState<number | null>(null);
-  const [state, setState] = useState<
-    { status: 'loading' } | { status: 'ready'; cars: Car[] } | { status: 'error' }
-  >({ status: 'loading' });
-
-  const key = JSON.stringify([filters, offset, limit, sort, query, featured]);
+  // The homepage sample is persisted to localStorage (see Providers), so the
+  // same nine cars greet a visitor for a few hours instead of every reload.
+  const { data, status } = useQuery(
+    featured ? featuredQuery : carsQuery(filters, offset, limit, sort, query),
+  );
 
   useEffect(() => {
-    let cancelled = false;
-    setState({ status: 'loading' });
-
-    (async () => {
-      try {
-        // With a text query we scan a window and match locally, as the server
-        // path does -- Encar has no free-text parameter.
-        if (featured) {
-          const cars = await pickFeatured();
-          if (cancelled) return;
-          onCount?.(cars.length);
-          setCount(cars.length);
-          setState({ status: 'ready', cars });
-          return;
-        }
-
-        const take = query ? 200 : limit;
-        const from = query ? 0 : offset;
-        const res = await fetch(searchUrl(filters, { offset: from, limit: take, sort }));
-        if (!res.ok) throw new Error(String(res.status));
-        const data = (await res.json()) as SearchResponse;
-        if (cancelled) return;
-
-        let cars = (data.SearchResults ?? []).map(normalize);
-        let count = data.Count ?? 0;
-
-        if (query) {
-          const needle = query.toLowerCase();
-          const hits = cars.filter((c) =>
-            `${c.make} ${c.model} ${c.trim ?? ''}`.toLowerCase().includes(needle));
-          count = hits.length;
-          cars = hits.slice(offset, offset + limit);
-        }
-
-        onCount?.(count);
-        setCount(count);
-        setState({ status: 'ready', cars });
-      } catch {
-        if (!cancelled) setState({ status: 'error' });
-      }
-    })();
-
-    return () => { cancelled = true; };
+    if (data) onCount?.(data.count);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key]);
+  }, [data]);
 
   const grid = className
     ?? 'grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4';
 
-  if (state.status === 'loading') {
+  if (status === 'pending') {
     return (
       <div className={grid}>
         {Array.from({ length: Math.min(limit, 8) }).map((_, i) => (
@@ -116,7 +72,7 @@ export default function ClientCars({
     );
   }
 
-  if (state.status === 'error') {
+  if (status === 'error') {
     return (
       <div className="rounded-lg border border-dashed border-border py-16 text-center">
         <p className="font-medium">Stoku nuk po ngarkohet për momentin.</p>
@@ -127,7 +83,8 @@ export default function ClientCars({
     );
   }
 
-  if (!state.cars.length) {
+  const { cars, count } = data;
+  if (!cars.length) {
     return (
       <p className="py-16 text-center text-muted-foreground">
         Asnjë veturë nuk përputhet me këta filtra.
@@ -137,7 +94,7 @@ export default function ClientCars({
 
   return (
     <>
-      {meta && count != null && (
+      {meta && (
         <p className="mb-6 -mt-2 text-sm text-muted-foreground">
           {count.toLocaleString('de-DE')} {count === 1 ? 'veturë' : 'vetura'}
           {query ? ` që përputhen me \u201c${query}\u201d brenda 200 rezultateve të para` : ''}
@@ -145,38 +102,14 @@ export default function ClientCars({
       )}
 
       <div className={grid}>
-        {state.cars.map((car) => (
+        {cars.map((car) => (
           <CarCard key={car.id} car={car} rate={rate} />
         ))}
       </div>
 
-      {meta && count != null && <Pager meta={meta} count={count} />}
+      {meta && <Pager meta={meta} count={count} />}
     </>
   );
-}
-
-/** Nine cars: six from the German four, three from anything else, shuffled. */
-async function pickFeatured(): Promise<Car[]> {
-  const pick = async (q: string, want: number) => {
-    const head = await fetch(searchUrlFor(q, 0, 1));
-    if (!head.ok) throw new Error(String(head.status));
-    const total = ((await head.json()) as SearchResponse).Count ?? 0;
-    if (!total) return [];
-    const offset = Math.max(0, Math.floor(Math.random() * Math.max(1, total - want)));
-    const page = await fetch(searchUrlFor(q, offset, want));
-    if (!page.ok) throw new Error(String(page.status));
-    return (((await page.json()) as SearchResponse).SearchResults ?? []).map(normalize);
-  };
-
-  const [german, rest] = await Promise.all([
-    pick(buildFeaturedQuery(), 6),
-    pick(buildQuery(), 3),
-  ]);
-  const seen = new Set<string>();
-  return [...german, ...rest]
-    .filter((c) => !seen.has(c.id) && seen.add(c.id))
-    .sort(() => Math.random() - 0.5)
-    .slice(0, 9);
 }
 
 function Pager({

@@ -6,10 +6,10 @@ const FALLBACK = 0.00064;
 
 export type Rate = { krwToEur: number; updated: string | null; live: boolean };
 
-/** Cached for an hour -- FX moves slowly and this is a display conversion. */
+/** Cached for six hours -- the source updates daily and this is a display conversion. */
 export async function getRate(): Promise<Rate> {
   try {
-    const res = await fetch(ENDPOINT, { next: { revalidate: 3600 } });
+    const res = await fetch(ENDPOINT, { next: { revalidate: 6 * 3600 } });
     if (!res.ok) throw new Error(String(res.status));
     const data = (await res.json()) as {
       result?: string;
