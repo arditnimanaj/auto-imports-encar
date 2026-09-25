@@ -9,8 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { imageUrl, PRICE_ON_REQUEST, type VehicleDetail } from '@/lib/encar-shared';
-import { landedEstimate } from '@/lib/customs';
-import { carEur, eur, km, ym } from '@/lib/format';
+import { carEur, km, ym } from '@/lib/format';
 import { bodySq, colorSq, fuelSq, makeSq, modelSq, transmissionSq } from '@/lib/i18n';
 import { MESSAGING, SITE } from '@/lib/site';
 
@@ -176,38 +175,6 @@ export default function CarDetail({
           <CarEquipment codes={car.options?.standard} />
           <CarHistory id={id} rate={rate} />
         </div>
-      </div>
-
-      {/* Phones: price and the two ways to act stay in reach while scrolling. */}
-      <div data-sticky-bar className="fixed inset-x-0 bottom-0 z-40 flex items-center gap-3 border-t border-border bg-paper/95 px-4 py-3 backdrop-blur lg:hidden">
-        <div className="min-w-0 flex-1">
-          {priceEur && !priceOnRequest ? (
-            <>
-              <p className="numeric font-display text-xl leading-tight font-extrabold text-brass">{eur(priceEur)}</p>
-              <p className="numeric truncate text-xs text-muted-foreground">
-                Me doganë deri në {eur(landedEstimate(priceEur, year, spec?.displacement).total)}
-              </p>
-            </>
-          ) : (
-            <p className="font-display font-bold">Çmimi me kërkesë</p>
-          )}
-        </div>
-        <Button
-          variant="outline"
-          size="icon-lg"
-          nativeButton={false}
-          aria-label="Na shkruani në WhatsApp"
-          render={<a href={MESSAGING.whatsapp(message)} target="_blank" rel="noopener" />}
-        >
-          <MessageCircle className="h-5 w-5" />
-        </Button>
-        <Button
-          size="lg"
-          nativeButton={false}
-          render={<Link href={`/contact?car=${encodeURIComponent(`${title} (${id})`)}`} />}
-        >
-          Kërko
-        </Button>
       </div>
     </div>
   );

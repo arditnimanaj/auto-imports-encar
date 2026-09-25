@@ -13,7 +13,7 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-steel bg-ink">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-5 py-4 md:px-8">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-6 px-5 md:px-8">
         <Link href="/" prefetch={false} className="shrink-0">
           <span className="font-display text-lg font-extrabold tracking-tight text-paper">
             Auto Kosova

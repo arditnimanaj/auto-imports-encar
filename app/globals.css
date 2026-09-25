@@ -174,10 +174,3 @@ h1, h2, h3 {
     @apply font-sans;
   }
 }
-/* The car page's phone action bar is fixed to the bottom; keep the footer
-   clear of it. It is hidden from lg up, and so is this. */
-@media (width < 64rem) {
-  body:has([data-sticky-bar]) {
-    padding-bottom: 4.75rem;
-  }
-}

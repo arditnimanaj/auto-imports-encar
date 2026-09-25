@@ -216,7 +216,7 @@ export default function SearchBar({ rate }: { rate: number }) {
   };
 
   return (
-    <div className="sticky top-[4.5rem] z-30 border-b border-border bg-paper/95 backdrop-blur supports-backdrop-filter:bg-paper/80">
+    <div className="sticky top-16 z-30 border-b border-border bg-paper/95 backdrop-blur supports-backdrop-filter:bg-paper/80">
       <form
         className="flex flex-wrap items-center gap-2 px-5 py-3 md:px-8"
         onSubmit={(e) => {
